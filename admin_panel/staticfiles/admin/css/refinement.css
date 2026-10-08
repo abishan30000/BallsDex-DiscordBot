@@ -84,3 +84,9 @@ body.login #content-main { width: 100%; max-width: none; float: none; }
 
 #content .related-widget-wrapper-link img { filter: grayscale(1) brightness(1.65) !important; opacity: .82; }
 #content .related-widget-wrapper-link:hover img { opacity: 1; }
+
+body.login #container { box-sizing: border-box !important; width: 100% !important; max-width: none !important; min-height: 100vh !important; margin: 0 !important; padding: 0 !important; display: block !important; border: 0 !important; }
+body.login #header { box-sizing: border-box !important; width: 100% !important; min-height: 82px !important; margin: 0 !important; padding: 18px 36px !important; }
+body.login #main, body.login #content { box-sizing: border-box !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+body.login .studio-login { width: 100%; max-width: none; }
+@media (max-width: 700px) { body.login #header { padding: 16px 18px !important; } }
