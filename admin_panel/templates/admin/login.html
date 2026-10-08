@@ -1,7 +1,9 @@
-{% extends "admin/login.html" %}
-{% load i18n static discordlogin %}
-{% block title %}Sign in | BallsDex Studio{% endblock %}
-{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/css/override.css' %}?v=6eb930b"><link rel="stylesheet" href="{% static 'admin/css/refinement.css' %}?v=a37b3ea">{% endblock %}
-{% block content %}
-{{ block.super }}
-{% endblock %}
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block title %}{% if form.errors %}{% translate 'Error' %}: {% endif %}{% translate 'Log in' %} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/css/override.css' %}?v=6eb930b">{% endblock %}
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+{% block usertools %}{% endblock %}
+{% block nav-global %}{% endblock %}
+{% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+{% block content %}<div id="content-main">{% if form.errors and not form.non_field_errors %}<p class="errornote">{% translate 'Please correct the error below.' %}</p>{% endif %}{% if form.non_field_errors %}{% for error in form.non_field_errors %}<p class="errornote">{{ error }}</p>{% endfor %}{% endif %}<form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}<div class="form-row">{{ form.username.errors }}{{ form.username.label_tag }}{{ form.username }}</div><div class="form-row">{{ form.password.errors }}{{ form.password.label_tag }}{{ form.password }}<input type="hidden" name="next" value="{{ next }}"></div>{% url 'admin_password_reset' as password_reset_url %}{% if password_reset_url %}<div class="password-reset-link"><a href="{{ password_reset_url }}">{% translate 'Forgotten your password or username?' %}</a></div>{% endif %}<div class="submit-row"><input type="submit" value="{% translate 'Log in' %}"></div></form></div>{% endblock %}
