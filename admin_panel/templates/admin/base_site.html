@@ -1,10 +1,9 @@
 {% extends "admin/base.html" %}
 {% load static %}
-
 {% block title %}{{ title }} | BallsDex Studio{% endblock %}
 {% block branding %}<h1 id="site-name"><a href="{% url 'admin:index' %}"><span class="studio-brand-mark">B</span><span>BallsDex <strong>Studio</strong></span></a></h1>{% endblock %}
-
 {% block extrastyle %}
   {{ block.super }}
-  <link rel="stylesheet" href="{% static 'admin/css/override.css' %}?v=5ed22ac">
+  <link rel="stylesheet" href="{% static 'admin/css/override.css' %}?v=6eb930b">
+  <link rel="stylesheet" href="{% static 'admin/css/refinement.css' %}?v=05b4d0e">
 {% endblock %}
