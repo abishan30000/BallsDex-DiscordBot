@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.egg-link
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Distribution / packaging
+*.whl
+*.tar.gz
+*.zip
+MANIFEST
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Type checkers
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*~
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+
+# OS
+.DS_Store
+Thumbs.db

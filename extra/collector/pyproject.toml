@@ -1,0 +1,31 @@
+[project]
+name = "collector"
+version = "0.0.4"
+
+description = "Collector package for BallsDex"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "flare", email = "flare@ballsdex.com" },
+]
+readme = "README.md"
+
+# dependencies = [
+#     "ballsdex>=3.0.0",
+# ]
+
+[project.urls]
+Homepage = "https://github.com/flaree/ballsdex-collector"
+Documentation = "https://ballsdex-collector.readthedocs.io"
+Changelogs = "https://ballsdex-collector.readthedocs.io/en/latest/changelog.html"
+Funding = "https://www.patreon.com/flaree"
+
+[project.optional-dependencies]
+docs = [
+    "furo",
+    "myst-parser",
+    "sphinx",
+]
+dev = [
+    "ruff",
+]

@@ -1,0 +1,20 @@
+[project]
+name = "frames"
+version = "0.0.9"
+
+description = "Frames package for BallsDex — date-based ball art overrides"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "flare", email = "flare@ballsdex.com" },
+]
+readme = "README.md"
+
+[tool.setuptools.package-data]
+frames = ["templates/**/*"]
+
+[project.urls]
+Homepage = "https://github.com/flaree/ballsdex-frames"
+Documentation = "https://ballsdex-frames.readthedocs.io/en/latest/"
+Changelogs = "https://ballsdex-frames.readthedocs.io/en/latest/changelog.html"
+Funding = "https://www.patreon.com/flaree"
