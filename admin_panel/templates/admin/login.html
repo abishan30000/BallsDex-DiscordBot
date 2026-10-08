@@ -1,7 +1,6 @@
-{% extends "admin/base_site.html" %}
-{% load i18n static %}
+{% extends "admin/base.html" %}
+{% load i18n %}
 {% block title %}{% if form.errors %}{% translate 'Error' %}: {% endif %}{% translate 'Log in' %} | {{ site_title|default:_('Django site admin') }}{% endblock %}
-{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/css/override.css' %}?v=6eb930b">{% endblock %}
 {% block bodyclass %}{{ block.super }} login{% endblock %}
 {% block usertools %}{% endblock %}
 {% block nav-global %}{% endblock %}
