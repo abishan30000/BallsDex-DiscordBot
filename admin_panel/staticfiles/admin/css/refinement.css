@@ -79,3 +79,5 @@ body.login #content-main { width: 100%; max-width: none; float: none; }
 .studio-model-main, .studio-model-main:link, .studio-model-main:visited { font-size: 14px; }
 .studio-model-add, .studio-model-add:link, .studio-model-add:visited { font-size: 12px; }
 @media (prefers-reduced-motion: reduce) { .studio-task-list a, .studio-model-main, .studio-action-primary { transition: none; } }
+
+#changelist-form:not(:has(.results))::after { content: 'No records yet. Use the Add button above when you are ready.'; display: grid; place-items: center; min-height: 220px; padding: 30px; border-top: 1px solid #332b3b; color: #b8aabc; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; text-align: center; }
