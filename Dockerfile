@@ -62,3 +62,7 @@ FROM base AS production
 COPY --from=builder-base /opt/venv /opt/venv
 WORKDIR /code/admin_panel
 USER ballsdex
+
+COPY render_start.py /code/render_start.py
+COPY --from=builder-base /code/config/extra.toml /code/config/extra.toml
+CMD ["python3", "/code/render_start.py"]
