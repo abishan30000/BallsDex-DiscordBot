@@ -15,8 +15,6 @@ body { font-size: 15px; line-height: 1.55; }
 #nav-sidebar a:hover { color: #fff !important; }
 #content { padding: 48px 50px 96px; }
 #content h1 { margin-bottom: 34px; font-size: clamp(38px, 3vw, 50px); }
-body:not(.dashboard) #content h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 400; }
-body:not(.dashboard) #content h3 { font-size: 17px; }
 #changelist { background: transparent; border: 0; }
 #changelist #toolbar { padding: 12px 0 18px; border-top: 1px solid #3b3244; border-bottom: 1px solid #3b3244; }
 #changelist #toolbar form { margin: 0; }
@@ -81,3 +79,5 @@ body.login #content-main { width: 100%; max-width: none; float: none; }
 @media (prefers-reduced-motion: reduce) { .studio-task-list a, .studio-model-main, .studio-action-primary { transition: none; } }
 
 #changelist-form:not(:has(.results))::after { content: 'No records yet. Use the Add button above when you are ready.'; display: grid; place-items: center; min-height: 220px; padding: 30px; border-top: 1px solid #332b3b; color: #b8aabc; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; text-align: center; }
+
+#content #changelist-filter a, #content #changelist-filter a:link, #content #changelist-filter a:visited { text-decoration: none !important; }
