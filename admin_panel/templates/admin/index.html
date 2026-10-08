@@ -1,108 +1,114 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
-
 {% block bodyclass %}{{ block.super }} dashboard{% endblock %}
-
 {% block extrastyle %}
 {{ block.super }}
 <style>
-  html[data-theme="auto"], html[data-theme="light"] { --body-bg: #f5f6f8; --body-fg: #1a1d24; --primary: #465fc7; --secondary: #27305c; --header-bg: #ffffff; --header-color: #1a1d24; --link-fg: #415ac5; --link-hover-color: #273eaa; --hairline-color: #e6e9ee; }
-  body.dashboard { background: #f5f6f8; color: #1a1d24; }
-  body.dashboard #header { background: rgba(255,255,255,.94); border-bottom: 1px solid #e8ebef; box-shadow: none; }
-  body.dashboard #branding h1 a, body.dashboard #branding h1 { color: #1a1d24; }
-  body.dashboard #user-tools, body.dashboard #user-tools a { color: #555e70; }
-  body.dashboard #content { box-sizing: border-box; max-width: 1420px; margin: 0 auto; padding: 38px 38px 80px; }
-  body.dashboard #content-main { float: none; width: 100%; }
+  .studio { box-sizing: border-box; max-width: 1570px; margin: 0 auto; padding: 0 48px 96px; color: #eee9f1; }
   .studio * { box-sizing: border-box; }
-  .studio a, .studio a:link, .studio a:visited { text-decoration: none !important; }
-  .studio-hero { position: relative; overflow: hidden; padding: 48px 52px; border-radius: 28px; background: radial-gradient(circle at 82% 20%, rgba(129,157,255,.28), transparent 32%), linear-gradient(130deg,#172348,#202f67 58%,#3851a0); box-shadow: 0 22px 44px rgba(26,41,93,.16); color: #fff; }
-  .studio-hero::after { content: ''; position: absolute; width: 340px; height: 340px; right: -95px; bottom: -205px; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; box-shadow: 0 0 0 54px rgba(255,255,255,.035), 0 0 0 108px rgba(255,255,255,.025); pointer-events: none; }
-  .studio-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; background: rgba(255,255,255,.09); color: #dce4ff; font-size: 11px; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; }
-  .studio-eyebrow::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #7de5c1; box-shadow: 0 0 0 4px rgba(125,229,193,.12); }
-  .studio-hero h1 { max-width: 700px; margin: 24px 0 12px !important; color: #fff !important; font-size: clamp(34px,4vw,54px) !important; line-height: 1.05; font-weight: 730; letter-spacing: -.055em; }
-  .studio-hero p { max-width: 650px; margin: 0; color: #c6d0f6; font-size: 16px; line-height: 1.6; }
-  .studio-hero-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
-  .studio-hero-links a { display: inline-flex; align-items: center; gap: 9px; min-height: 43px; padding: 10px 17px; border-radius: 11px; background: #fff; color: #1b2b67 !important; font-size: 13px; font-weight: 700; box-shadow: 0 5px 12px rgba(6,14,42,.14); }
-  .studio-hero-links a.secondary { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25); color: #fff !important; box-shadow: none; }
-  .studio-hero-links a:hover { transform: translateY(-2px); }
-  .studio-section-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 36px 0 17px; }
-  .studio-section-head h2 { margin: 0; color: #171b26; font-size: 22px; line-height: 1.2; font-weight: 740; letter-spacing: -.035em; }
-  .studio-section-head p { margin: 5px 0 0; color: #737b8b; font-size: 13px; }
-  .studio-quick { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
-  .studio-quick a { display: flex; flex-direction: column; min-height: 162px; padding: 20px; border: 1px solid #e6e9ef; border-radius: 19px; background: #fff; color: #1b2030 !important; box-shadow: 0 5px 16px rgba(28,41,75,.035); transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
-  .studio-quick a:hover { transform: translateY(-3px); border-color: #cbd3f6; box-shadow: 0 15px 28px rgba(28,41,75,.09); }
-  .studio-icon { display: grid; place-items: center; width: 37px; height: 37px; margin-bottom: 18px; border-radius: 11px; background: #edf0ff; color: #435ac6; font-size: 16px; font-weight: 750; }
-  .studio-quick strong { display: block; margin-bottom: 5px; font-size: 15px; font-weight: 720; letter-spacing: -.025em; }
-  .studio-quick small { display: block; color: #7b8392; font-size: 12px; line-height: 1.45; }
-  .studio-search { position: relative; display: flex; align-items: center; margin: 34px 0 22px; }
-  .studio-search input { width: 100%; height: 50px; padding: 0 78px 0 46px !important; border: 1px solid #e1e5ed !important; border-radius: 14px !important; background: #fff !important; color: #202638 !important; font-size: 14px; box-shadow: 0 4px 12px rgba(28,41,75,.03) !important; }
-  .studio-search input:focus { outline: none; border-color: #8495e2 !important; box-shadow: 0 0 0 4px rgba(84,106,206,.11) !important; }
-  .studio-search-symbol { position: absolute; left: 18px; color: #8c94a6; font-size: 20px; pointer-events: none; }
-  .studio-search kbd { position: absolute; right: 15px; padding: 4px 9px; border: 1px solid #e4e7ed; border-radius: 7px; background: #f8f9fb; color: #858e9e; font-size: 12px; }
-  .studio-group { margin: 19px 0; padding: 22px; border: 1px solid #e6e9ef; border-radius: 20px; background: #fff; box-shadow: 0 5px 16px rgba(28,41,75,.03); }
-  .studio-group-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  .studio-group-head h3 { margin: 0; color: #242b3c; font-size: 16px; font-weight: 730; letter-spacing: -.025em; }
-  .studio-count { color: #9299a8; font-size: 12px; }
-  .studio-models { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
-  .studio-model { display: flex; align-items: center; min-width: 0; border: 1px solid #edf0f4; border-radius: 12px; background: #fbfcfe; }
-  .studio-model:hover { border-color: #cbd3f6; background: #f8f9ff; }
-  .studio-model-main { display: flex; align-items: center; gap: 11px; flex: 1; min-width: 0; min-height: 57px; padding: 10px 12px; color: #2e3546 !important; font-size: 13px; font-weight: 650; }
-  .studio-model-mark { display: grid; place-items: center; flex: none; width: 31px; height: 31px; border-radius: 9px; background: #e8edff; color: #485fc4; font-size: 13px; font-weight: 760; }
-  .studio-model-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .studio-model-add { flex: none; margin-right: 12px; padding: 7px 9px; border-radius: 7px; background: #edf0ff; color: #435ac6 !important; font-size: 11px; font-weight: 750; }
-  .studio-model-add:hover { background: #dfe5ff; }
-  .studio-model[hidden], .studio-group[hidden], .studio-empty[hidden] { display: none !important; }
-  .studio-empty { padding: 38px 18px; border: 1px dashed #cbd2e0; border-radius: 16px; text-align: center; color: #697283; }
-  @media (max-width: 1050px) { .studio-quick { grid-template-columns: repeat(2,minmax(0,1fr)); } .studio-models { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-  @media (max-width: 650px) { body.dashboard #content { padding: 18px 15px 45px; } .studio-hero { padding: 34px 25px; border-radius: 21px; } .studio-hero h1 { font-size: 36px !important; } .studio-quick, .studio-models { grid-template-columns: 1fr; } .studio-quick a { min-height: 135px; } .studio-group { padding: 17px; } }
-  @media (prefers-reduced-motion: reduce) { .studio-quick a, .studio-hero-links a { transition: none; } }
+  .studio a, .studio a:link, .studio a:visited { text-decoration: none; }
+  .studio-intro { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(280px,.65fr); border-bottom: 1px solid #3b3244; }
+  .studio-intro-main { padding: 72px 56px 72px 0; }
+  .studio-kicker { display: block; color: #b797c9; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  .studio-intro h1 { max-width: 750px; margin: 24px 0 0 !important; color: #f7f3f8 !important; font-family: Georgia, "Times New Roman", serif; font-size: 66px !important; font-weight: 400 !important; line-height: 1.04; letter-spacing: 0 !important; }
+  .studio-intro-side { display: flex; flex-direction: column; justify-content: end; padding: 50px 0 70px 48px; border-left: 1px solid #3b3244; }
+  .studio-intro-side p { max-width: 340px; margin: 0 0 29px; color: #bbb1c3; font-size: 16px; line-height: 1.65; }
+  .studio-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+  .studio-action-primary, .studio-action-primary:link, .studio-action-primary:visited { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 17px; background: #aa89be; color: #100d15 !important; font-size: 13px; font-weight: 700; }
+  .studio-action-primary:hover { background: #c3a5d3; }
+  .studio-action-link, .studio-action-link:link, .studio-action-link:visited { color: #e1d6e8 !important; border-bottom: 1px solid #8d729d; padding: 6px 0; font-size: 13px; font-weight: 600; }
+  .studio-action-link:hover { color: #fff !important; border-color: #fff; }
+  .studio-section { padding-top: 54px; }
+  .studio-section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+  .studio-section-title h2 { margin: 0; color: #f1ebf4 !important; font-family: Georgia, "Times New Roman", serif; font-size: 31px; font-weight: 400; }
+  .studio-section-title p { margin: 0; color: #a69bac; font-size: 12px; }
+  .studio-tasks { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(300px,.75fr); border-top: 1px solid #3b3244; border-bottom: 1px solid #3b3244; }
+  .studio-primary-task { min-height: 310px; padding: 33px 42px 36px; display: flex; flex-direction: column; align-items: start; background: #211a28; border-left: 3px solid #a98cc0; }
+  .studio-task-num { color: #a98cb9; font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+  .studio-primary-task h3 { margin: auto 0 8px; color: #f7f3f8 !important; font-family: Georgia, "Times New Roman", serif; font-size: 42px; font-weight: 400; }
+  .studio-primary-task p { max-width: 440px; margin: 0 0 24px; color: #c4b9cb; font-size: 14px; line-height: 1.6; }
+  .studio-primary-task a, .studio-primary-task a:link, .studio-primary-task a:visited { color: #ecdff3; border-bottom: 1px solid #c4a8d7; padding-bottom: 5px; font-size: 13px; font-weight: 700; }
+  .studio-task-list { border-left: 1px solid #3b3244; }
+  .studio-task-list a, .studio-task-list a:link, .studio-task-list a:visited { display: grid; grid-template-columns: 1fr auto; align-content: center; min-height: 103px; padding: 18px 27px; border-bottom: 1px solid #3b3244; color: #eee9f1; }
+  .studio-task-list a:last-child { border-bottom: 0; }
+  .studio-task-list a:hover { background: #1b1621; }
+  .studio-task-list strong { font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 400; }
+  .studio-task-list span { grid-column: 1; color: #aaa1b2; font-size: 12px; }
+  .studio-task-list b { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: #b797c9; font-size: 19px; font-weight: 400; }
+  .studio-directory { padding-top: 76px; }
+  .studio-directory-head { display: grid; grid-template-columns: 1fr minmax(270px,360px); align-items: end; gap: 28px; margin-bottom: 28px; }
+  .studio-directory-head h2 { margin: 0 0 8px; color: #f1ebf4 !important; font-family: Georgia, "Times New Roman", serif; font-size: 31px; font-weight: 400; }
+  .studio-directory-head p { margin: 0; color: #aaa1b2; font-size: 13px; }
+  .studio-directory input { width: 100%; min-height: 45px; margin: 0; padding: 10px 13px !important; background: #17131d !important; border: 1px solid #55465f !important; color: #f4eff7 !important; font-size: 13px; }
+  .studio-directory input:focus { border-color: #b695ca !important; }
+  .studio-group { display: grid; grid-template-columns: minmax(190px,.3fr) minmax(0,.7fr); gap: 36px; padding: 27px 0; border-top: 1px solid #3b3244; }
+  .studio-group-head h3 { margin: 0 0 9px; color: #eee9f1 !important; font-size: 13px; font-weight: 700; }
+  .studio-group-head span { color: #8f8599; font-size: 11px; }
+  .studio-models { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 24px; }
+  .studio-model { display: flex; align-items: center; min-height: 49px; border-bottom: 1px solid #2c2433; }
+  .studio-model-main, .studio-model-main:link, .studio-model-main:visited { flex: 1; min-width: 0; padding: 10px 0; color: #ddd4e4; font-size: 13px; font-weight: 600; }
+  .studio-model-main:hover { color: #fff; }
+  .studio-model-add, .studio-model-add:link, .studio-model-add:visited { flex: none; margin-left: 9px; color: #b797c9; font-size: 11px; }
+  .studio-model-add:hover { color: #f4eff7; }
+  .studio-empty { padding: 30px 0; border-top: 1px solid #3b3244; color: #aaa1b2; }
+  .studio-group[hidden], .studio-model[hidden], .studio-empty[hidden] { display: none !important; }
+  @media (max-width: 950px) { .studio { padding: 0 26px 76px; } .studio-intro { grid-template-columns: 1fr; } .studio-intro-main { padding: 50px 0 18px; } .studio-intro h1 { font-size: 52px !important; } .studio-intro-side { border-left: 0; padding: 0 0 48px; } .studio-intro-side p { max-width: 620px; } }
+  @media (max-width: 700px) { .studio { padding: 0 18px 60px; } .studio-intro-main { padding-top: 40px; } .studio-intro h1 { font-size: 43px !important; } .studio-section { padding-top: 42px; } .studio-section-title { display: block; } .studio-section-title p { margin-top: 8px; } .studio-tasks { grid-template-columns: 1fr; } .studio-primary-task { min-height: 260px; padding: 27px; } .studio-task-list { border-left: 0; } .studio-directory { padding-top: 54px; } .studio-directory-head { grid-template-columns: 1fr; } .studio-group { grid-template-columns: 1fr; gap: 15px; } .studio-models { grid-template-columns: 1fr; } }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="studio">
-  <header class="studio-hero">
-    <span class="studio-eyebrow">BallsDex control center</span>
-    <h1>Run your world,<br>beautifully.</h1>
-    <p>Everything you need to manage your collection, players, economy, and bot settings—organized in one calm workspace.</p>
-    <div class="studio-hero-links">
-      <a href="/bd_models/ball/">Manage countryballs <span aria-hidden="true">↗</span></a>
-      <a class="secondary" href="/settings/settings/">Open bot settings <span aria-hidden="true">↗</span></a>
+  <section class="studio-intro" aria-labelledby="studio-title">
+    <div class="studio-intro-main">
+      <span class="studio-kicker">BallsDex administration</span>
+      <h1 id="studio-title">Manage the bot<br>from one place.</h1>
     </div>
-  </header>
-
-  <div class="studio-section-head">
-    <div><h2>Quick access</h2><p>Jump straight to what you use most.</p></div>
-  </div>
-  <nav class="studio-quick" aria-label="Quick access">
-    <a href="/bd_models/ball/"><span class="studio-icon" aria-hidden="true">B</span><strong>Countryballs</strong><small>Edit the collection and artwork</small></a>
-    <a href="/bd_models/player/"><span class="studio-icon" aria-hidden="true">P</span><strong>Players</strong><small>Find and manage player accounts</small></a>
-    <a href="/bd_models/economy/"><span class="studio-icon" aria-hidden="true">E</span><strong>Economy</strong><small>Review balances and currency</small></a>
-    <a href="/settings/settings/"><span class="studio-icon" aria-hidden="true">S</span><strong>Bot settings</strong><small>Configure how BallsDex runs</small></a>
-  </nav>
-
-  <div class="studio-section-head"><div><h2>All tools</h2><p>Browse by area, or search for a model.</p></div></div>
-  <div class="studio-search">
-    <span class="studio-search-symbol" aria-hidden="true">⌕</span>
-    <input id="studio-search" type="search" aria-label="Search admin tools" placeholder="Search countryballs, users, frames, settings…" autocomplete="off">
-    <kbd aria-hidden="true">/</kbd>
-  </div>
-  <div id="studio-groups">
-    {% for app in app_list %}
-    <section class="studio-group" data-studio-group>
-      <div class="studio-group-head"><h3>{{ app.name }}</h3><span class="studio-count">{{ app.models|length }} tool{{ app.models|length|pluralize }}</span></div>
-      <div class="studio-models">
-        {% for model in app.models %}
-        <div class="studio-model" data-studio-model data-search="{{ app.name }} {{ model.name }}">
-          {% if model.admin_url %}<a class="studio-model-main" href="{{ model.admin_url }}"><span class="studio-model-mark" aria-hidden="true">{{ model.name|slice:":1" }}</span><span class="studio-model-name">{{ model.name }}</span></a>{% else %}<span class="studio-model-main"><span class="studio-model-name">{{ model.name }}</span></span>{% endif %}
-          {% if model.add_url %}<a class="studio-model-add" href="{{ model.add_url }}" aria-label="Add {{ model.name }}">+ New</a>{% endif %}
-        </div>
-        {% endfor %}
+    <div class="studio-intro-side">
+      <p>Edit the ball catalog, manage players and set how the bot behaves.</p>
+      <div class="studio-actions">
+        <a class="studio-action-primary" href="/bd_models/ball/">Open countryballs</a>
+        <a class="studio-action-link" href="/settings/settings/">Bot settings</a>
       </div>
-    </section>
-    {% endfor %}
-  </div>
-  <p id="studio-empty" class="studio-empty" hidden>No tools match that search.</p>
+    </div>
+  </section>
+  <section class="studio-section" aria-labelledby="studio-tasks-title">
+    <div class="studio-section-title"><h2 id="studio-tasks-title">Common tasks</h2><p>Start with the areas you use most.</p></div>
+    <div class="studio-tasks">
+      <div class="studio-primary-task">
+        <span class="studio-task-num">01 / CATALOG</span>
+        <h3>Countryballs</h3>
+        <p>Edit names, artwork and abilities in the ball catalog.</p>
+        <a href="/bd_models/ball/">View countryballs</a>
+      </div>
+      <nav class="studio-task-list" aria-label="Common admin tasks">
+        <a href="/bd_models/player/"><strong>Players</strong><span>Review player records</span><b aria-hidden="true">↗</b></a>
+        <a href="/bd_models/economy/"><strong>Economy</strong><span>Edit economy entries</span><b aria-hidden="true">↗</b></a>
+        <a href="/settings/settings/"><strong>Bot settings</strong><span>Change bot-wide options</span><b aria-hidden="true">↗</b></a>
+      </nav>
+    </div>
+  </section>
+  <section class="studio-directory" aria-labelledby="studio-directory-title">
+    <div class="studio-directory-head">
+      <div><h2 id="studio-directory-title">All admin tools</h2><p>Browse every area or search by name.</p></div>
+      <input id="studio-search" type="search" aria-label="Search admin tools" placeholder="Search tools" autocomplete="off">
+    </div>
+    <div id="studio-groups">
+      {% for app in app_list %}
+      <section class="studio-group" data-studio-group>
+        <div class="studio-group-head"><h3>{{ app.name }}</h3><span>{{ app.models|length }} tool{{ app.models|length|pluralize }}</span></div>
+        <div class="studio-models">
+          {% for model in app.models %}
+          <div class="studio-model" data-studio-model data-search="{{ app.name }} {{ model.name }}">
+            {% if model.admin_url %}<a class="studio-model-main" href="{{ model.admin_url }}">{{ model.name }}</a>{% else %}<span class="studio-model-main">{{ model.name }}</span>{% endif %}
+            {% if model.add_url %}<a class="studio-model-add" href="{{ model.add_url }}" aria-label="Add {{ model.name }}">+ New</a>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+    <p id="studio-empty" class="studio-empty" hidden>No tools match your search.</p>
+  </section>
 </div>
 <script>
 (function () {
@@ -111,18 +117,18 @@
   var empty = document.getElementById('studio-empty');
   search.addEventListener('input', function () {
     var query = search.value.trim().toLowerCase();
-    var shown = 0;
+    var visible = 0;
     groups.forEach(function (group) {
       var count = 0;
       group.querySelectorAll('[data-studio-model]').forEach(function (model) {
         var match = model.getAttribute('data-search').toLowerCase().includes(query);
         model.hidden = !match;
-        if (match) count += 1;
+        if (match) count++;
       });
       group.hidden = count === 0;
-      shown += count;
+      visible += count;
     });
-    empty.hidden = shown > 0;
+    empty.hidden = visible !== 0;
   });
   document.addEventListener('keydown', function (event) {
     if (event.key === '/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
