@@ -81,3 +81,6 @@ body.login #content-main { width: 100%; max-width: none; float: none; }
 #changelist-form:not(:has(.results))::after { content: 'No records yet. Use the Add button above when you are ready.'; display: grid; place-items: center; min-height: 220px; padding: 30px; border-top: 1px solid #332b3b; color: #b8aabc; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; text-align: center; }
 
 #content #changelist-filter a, #content #changelist-filter a:link, #content #changelist-filter a:visited { text-decoration: none !important; }
+
+#content .related-widget-wrapper-link img { filter: grayscale(1) brightness(1.65) !important; opacity: .82; }
+#content .related-widget-wrapper-link:hover img { opacity: 1; }
