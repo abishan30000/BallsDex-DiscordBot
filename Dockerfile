@@ -60,9 +60,9 @@ COPY --from=builder-base /var/www/ballsdex/static /var/www/ballsdex/static
 
 FROM base AS production
 COPY --from=builder-base /opt/venv /opt/venv
+COPY --from=builder-base /var/www/ballsdex/static /var/www/ballsdex/static
 WORKDIR /code/admin_panel
 USER ballsdex
-
 COPY render_start.py /code/render_start.py
 COPY --from=builder-base /code/config/extra.toml /code/config/extra.toml
 CMD ["python3", "/code/render_start.py"]

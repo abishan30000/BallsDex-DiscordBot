@@ -273,7 +273,7 @@ class Command(BaseCommand):
         server = None
 
         load_settings()
-        if not settings.bot_token:
+        if not (os.environ.get("BALLSDEXBOT_TOKEN") or settings.bot_token):
             self.stderr.write(
                 self.style.ERROR(
                     "You have not configured bot settings yet! Open the admin panel and write a settings entry."
@@ -287,7 +287,7 @@ class Command(BaseCommand):
         asyncio.set_event_loop(loop)
 
         try:
-            token = settings.bot_token
+            token = os.environ.get("BALLSDEXBOT_TOKEN") or settings.bot_token
             if not token:
                 log.error("Token not found!")
                 raise CommandError("You must provide a token inside the config.yml file.")
