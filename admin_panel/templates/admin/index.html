@@ -1,6 +1,8 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
 {% block extrastyle %}
 {{ block.super }}
 <style>
@@ -12,7 +14,7 @@
   body.dashboard #content { box-sizing: border-box; max-width: 1420px; margin: 0 auto; padding: 38px 38px 80px; }
   body.dashboard #content-main { float: none; width: 100%; }
   .studio * { box-sizing: border-box; }
-  .studio a { text-decoration: none; }
+  .studio a, .studio a:link, .studio a:visited { text-decoration: none !important; }
   .studio-hero { position: relative; overflow: hidden; padding: 48px 52px; border-radius: 28px; background: radial-gradient(circle at 82% 20%, rgba(129,157,255,.28), transparent 32%), linear-gradient(130deg,#172348,#202f67 58%,#3851a0); box-shadow: 0 22px 44px rgba(26,41,93,.16); color: #fff; }
   .studio-hero::after { content: ''; position: absolute; width: 340px; height: 340px; right: -95px; bottom: -205px; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; box-shadow: 0 0 0 54px rgba(255,255,255,.035), 0 0 0 108px rgba(255,255,255,.025); pointer-events: none; }
   .studio-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; background: rgba(255,255,255,.09); color: #dce4ff; font-size: 11px; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; }
@@ -88,7 +90,7 @@
   <div id="studio-groups">
     {% for app in app_list %}
     <section class="studio-group" data-studio-group>
-      <div class="studio-group-head"><h3>{{ app.name }}</h3><span class="studio-count">{{ app.models|length }} tools</span></div>
+      <div class="studio-group-head"><h3>{{ app.name }}</h3><span class="studio-count">{{ app.models|length }} tool{{ app.models|length|pluralize }}</span></div>
       <div class="studio-models">
         {% for model in app.models %}
         <div class="studio-model" data-studio-model data-search="{{ app.name }} {{ model.name }}">
