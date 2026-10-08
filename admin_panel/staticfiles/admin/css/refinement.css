@@ -15,8 +15,8 @@ body { font-size: 15px; line-height: 1.55; }
 #nav-sidebar a:hover { color: #fff !important; }
 #content { padding: 48px 50px 96px; }
 #content h1 { margin-bottom: 34px; font-size: clamp(38px, 3vw, 50px); }
-#content h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 400; }
-#content h3 { font-size: 17px; }
+body:not(.dashboard) #content h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 400; }
+body:not(.dashboard) #content h3 { font-size: 17px; }
 #changelist { background: transparent; border: 0; }
 #changelist #toolbar { padding: 12px 0 18px; border-top: 1px solid #3b3244; border-bottom: 1px solid #3b3244; }
 #changelist #toolbar form { margin: 0; }
