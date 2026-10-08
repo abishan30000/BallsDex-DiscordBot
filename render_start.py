@@ -24,7 +24,19 @@ def main():
         cwd="/code/admin_panel",
     )
     django.setup()
+    from django.contrib.auth import get_user_model
     from settings.models import Settings
+
+    username = os.environ.pop("DJANGO_SUPERUSER_USERNAME", "").strip()
+    password = os.environ.pop("DJANGO_SUPERUSER_PASSWORD", "")
+    if username and password:
+        User = get_user_model()
+        if not User.objects.filter(username=username).exists():
+            User.objects.create_superuser(username=username, email="", password=password)
+            print(f"Created Django superuser {username!r} from one-time bootstrap variables.", flush=True)
+        else:
+            print(f"Django superuser {username!r} already exists; bootstrap was not applied.", flush=True)
+        del password
 
     setting, _ = Settings.objects.get_or_create(pk=1)
     token = os.environ.get("BALLSDEXBOT_TOKEN")
