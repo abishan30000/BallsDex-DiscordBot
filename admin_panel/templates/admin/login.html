@@ -3,33 +3,5 @@
 {% block title %}Sign in | BallsDex Studio{% endblock %}
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/css/override.css' %}?v=6eb930b"><link rel="stylesheet" href="{% static 'admin/css/refinement.css' %}?v=a37b3ea">{% endblock %}
 {% block content %}
-<div class="studio-login">
-  <section class="studio-login-intro" aria-labelledby="studio-login-title">
-    <div>
-      <span class="studio-login-eyebrow">BallsDex administration</span>
-      <h1 id="studio-login-title">The work behind the bot.</h1>
-      <p>Edit countryballs, review players and manage settings from one private space.</p>
-    </div>
-    <div class="studio-login-foot">BallsDex Studio</div>
-  </section>
-  <section class="studio-login-panel" aria-labelledby="studio-signin-title">
-    <div class="studio-login-panel-inner">
-      <span class="studio-login-eyebrow">Private access</span>
-      <h2 id="studio-signin-title">Sign in.</h2>
-      <p>Use your admin account to continue.</p>
-      {% if form.errors and not form.non_field_errors %}<p class="errornote">Please check the information below.</p>{% endif %}
-      {% if form.non_field_errors %}{% for error in form.non_field_errors %}<p class="errornote">{{ error }}</p>{% endfor %}{% endif %}
-      {% if user.is_authenticated %}<p class="errornote">This account cannot access the admin. Sign in with a different account.</p>{% endif %}
-      <form action="{{ app_path }}" method="post" id="login-form" style="{% if not pwlogin %}display:none;{% endif %}">{% csrf_token %}
-        <div class="form-row">{{ form.username.errors }}{{ form.username.label_tag }} {{ form.username }}</div>
-        <div class="form-row">{{ form.password.errors }}{{ form.password.label_tag }} {{ form.password }}<input type="hidden" name="next" value="{{ next }}"></div>
-        {% url 'admin_password_reset' as password_reset_url %}
-        {% if password_reset_url %}<div class="password-reset-link"><a href="{{ password_reset_url }}">Forgot your login details?</a></div>{% endif %}
-        <div class="submit-row"><input type="submit" value="Sign in"></div>
-      </form>
-      {% has_enabled_discord_login as discord %}
-      {% if discord %}<div class="discord-row"><a href="{% url 'social:begin' 'discord' %}" class="button discord-button"><img src="{% static 'admin/img/discord.svg' %}" class="discord-icon" alt=""><span class="discord-text">Sign in with Discord</span></a></div>{% endif %}
-    </div>
-  </section>
-</div>
+{{ block.super }}
 {% endblock %}
