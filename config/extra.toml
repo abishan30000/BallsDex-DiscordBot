@@ -1,0 +1,14 @@
+[[ballsdex.packages]]
+location = "/code/extra/collector"
+path = "collector"
+enabled = true
+
+[[ballsdex.packages]]
+location = "/code/extra/frames"
+path = "frames"
+enabled = true
+
+[[ballsdex.packages]]
+location = "/code/extra/crafting"
+path = "crafting"
+enabled = true
