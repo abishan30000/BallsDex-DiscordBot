@@ -60,6 +60,8 @@ COPY --from=builder-base /var/www/ballsdex/static /var/www/ballsdex/static
 
 FROM base AS production
 COPY --from=builder-base /opt/venv /opt/venv
+COPY --from=builder-base /code/admin_panel/templates /code/admin_panel/templates
+COPY --from=builder-base /code/admin_panel/staticfiles /code/admin_panel/staticfiles
 WORKDIR /code/admin_panel
 USER ballsdex
 
