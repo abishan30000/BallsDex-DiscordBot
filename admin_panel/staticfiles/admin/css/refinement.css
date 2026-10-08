@@ -72,3 +72,10 @@ body.login #content-main { width: 100%; max-width: none; float: none; }
 .studio-login-panel .discord-row a:hover { background: #2b2234; }
 @media (max-width: 900px) { .studio-login { grid-template-columns: 1fr; } .studio-login-intro { padding: 48px 32px; min-height: 340px; } .studio-login-intro h1 { font-size: 54px !important; } .studio-login-foot { margin-top: 50px; } .studio-login-panel { padding: 60px 32px 90px; } }
 @media (max-width: 700px) { #header, body.login #header { padding: 16px 18px; } #content { padding: 30px 20px 70px; } #content h1 { font-size: 36px; } .studio-login-intro { min-height: 290px; padding: 36px 22px; } .studio-login-intro h1 { font-size: 46px !important; } .studio-login-intro p { font-size: 15px; } .studio-login-panel { padding: 46px 22px 70px; } }
+
+#content .studio a, #content .studio a:link, #content .studio a:visited { text-decoration: none !important; }
+.studio-task-list a, .studio-model-main, .studio-action-primary { transition: background-color .18s ease, color .18s ease; }
+.studio-task-list span { font-size: 13px; }
+.studio-model-main, .studio-model-main:link, .studio-model-main:visited { font-size: 14px; }
+.studio-model-add, .studio-model-add:link, .studio-model-add:visited { font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .studio-task-list a, .studio-model-main, .studio-action-primary { transition: none; } }
