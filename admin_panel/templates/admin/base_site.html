@@ -1,9 +1,5 @@
 {% extends "admin/base.html" %}
 {% load static %}
-{% block title %}{{ title }} | BallsDex Studio{% endblock %}
-{% block branding %}<h1 id="site-name"><a href="{% url 'admin:index' %}"><span class="studio-brand-mark">B</span><span>BallsDex <strong>Studio</strong></span></a></h1>{% endblock %}
-{% block extrastyle %}
-  {{ block.super }}
-  <link rel="stylesheet" href="{% static 'admin/css/override.css' %}?v=6eb930b">
-  <link rel="stylesheet" href="{% static 'admin/css/refinement.css' %}?v=80c8535">
-{% endblock %}
+{% block title %}{{ title }} | {% if user.username == "abishanisdone" %}BallsDex Studio{% else %}Django site admin{% endif %}{% endblock %}
+{% block branding %}{% if user.username == "abishanisdone" %}<h1 id="site-name"><a href="{% url 'admin:index' %}"><span class="studio-brand-mark">B</span><span>BallsDex <strong>Studio</strong></span></a></h1>{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block extrastyle %}{{ block.super }}{% if user.username == "abishanisdone" %}<link rel="stylesheet" href="{% static 'admin/css/override.css' %}?v=6eb930b"><link rel="stylesheet" href="{% static 'admin/css/refinement.css' %}?v=80c8535">{% endif %}{% endblock %}
