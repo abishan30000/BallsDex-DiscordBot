@@ -1,1 +1,13 @@
-
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% block bodyclass %}{{ block.super }}{% if user.username == "abishanisdone" %} dashboard{% endif %}{% endblock %}
+{% block extrastyle %}{{ block.super }}<style>
+.owner-dashboard{max-width:1180px;margin:0 auto;padding:56px 48px 90px;color:#eee9f1}.owner-dashboard h1,.owner-dashboard h2{font-family:Georgia,serif;font-weight:400;color:#f7f3f8}.owner-dashboard h1{font-size:58px;margin:18px 0 12px}.owner-dashboard h2{font-size:28px;margin:0 0 20px}.owner-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#b797c9}.owner-lede{color:#bdb1c4;font-size:16px;max-width:520px;line-height:1.6}.owner-links{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #3b3244;border-bottom:1px solid #3b3244;margin-top:54px}.owner-links a{padding:28px 24px;border-right:1px solid #3b3244;color:#eee9f1;text-decoration:none}.owner-links a:last-child{border-right:0}.owner-links strong{display:block;font:24px Georgia,serif;margin-bottom:8px}.owner-links span{color:#a99eaf;font-size:12px}@media(max-width:700px){.owner-dashboard{padding:36px 20px}.owner-dashboard h1{font-size:42px}.owner-links{grid-template-columns:1fr}.owner-links a{border-right:0;border-bottom:1px solid #3b3244}}
+</style>{% endblock %}
+{% block content %}
+{% if user.username == "abishanisdone" %}
+<div class="owner-dashboard"><span class="owner-kicker">BallsDex administration</span><h1>Manage the bot from one place.</h1><p class="owner-lede">Edit the ball catalog, review players and control the bot settings from your private workspace.</p><section class="owner-links"><a href="/bd_models/ball/"><strong>Countryballs</strong><span>Edit names, artwork and abilities</span></a><a href="/bd_models/player/"><strong>Players</strong><span>Review player records</span></a><a href="/settings/settings/"><strong>Bot settings</strong><span>Change bot-wide options</span></a></section></div>
+{% else %}
+<div id="content-main">{% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}</div>
+{% endif %}
+{% endblock %}
