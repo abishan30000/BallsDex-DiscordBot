@@ -52,14 +52,7 @@ def _valid_access_jwt(token: str) -> bool:
         return False
     try:
         signing_key = _jwks_client.get_signing_key_from_jwt(token).key
-        jwt.decode(
-            token,
-            signing_key,
-            algorithms=["RS256"],
-            audience=_audience,
-            issuer=_issuer,
-            options={"require": ["exp", "iss", "aud"]},
-        )
+        jwt.decode(token, signing_key, algorithms=["RS256"], audience=_audience, issuer=_issuer)
         return True
     except Exception:
         return False
@@ -67,6 +60,7 @@ def _valid_access_jwt(token: str) -> bool:
 
 async def application(scope, receive, send):
     if scope["type"] != "http":
+        await django_application(scope, receive, send)
         return
 
     path = scope.get("path", "/")
