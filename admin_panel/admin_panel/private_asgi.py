@@ -1,4 +1,4 @@
-"""Keep Render's public origin health-only and require a valid Cloudflare Access JWT for the panel."""
+"""Public login, protected Django admin panel."""
 
 import mimetypes
 import os
@@ -23,7 +23,10 @@ async def _response(send, status: int, body: bytes, content_type: bytes = b"text
         {
             "type": "http.response.start",
             "status": status,
-            "headers": [(b"content-type", content_type), (b"content-length", str(len(body)).encode())],
+            "headers": [
+                (b"content-type", content_type),
+                (b"content-length", str(len(body)).encode()),
+            ],
         }
     )
     await send({"type": "http.response.body", "body": body})
@@ -65,19 +68,18 @@ async def application(scope, receive, send):
         await _response(send, 200, b"ok\n")
         return
 
-    headers = dict(scope.get("headers", []))
-    token = headers.get(b"cf-access-jwt-assertion", b"").decode("ascii", "ignore")
-    if not _valid_access_jwt(token):
-        await _response(send, 404, b"Not found\n")
-        return
-
     static_prefix = "/" + settings.STATIC_URL.strip("/") + "/"
-    media_prefix = "/" + settings.MEDIA_URL.strip("/") + "/"
     if path.startswith(static_prefix):
         await _serve_file(send, settings.STATIC_ROOT, path[len(static_prefix) :])
         return
+    media_prefix = "/" + settings.MEDIA_URL.strip("/") + "/"
     if path.startswith(media_prefix):
         await _serve_file(send, settings.MEDIA_ROOT, path[len(media_prefix) :])
+        return
+    headers = dict(scope.get("headers", []))
+    token = headers.get(b"cf-access-jwt-assertion", b"").decode("ascii", "ignore")
+    if not _valid_access_jwt(token) and path not in ("/login/", "/logout/"):
+        await _response(send, 404, b"Not found\n")
         return
 
     await django_application(scope, receive, send)
