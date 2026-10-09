@@ -153,6 +153,11 @@ async def spawn(ctx: commands.Context[BallsDexBot], *, flags: SpawnFlags):
             f"in {flags.channel or ctx.channel}" + (f" ({', '.join(special_attrs)})." if special_attrs else "."),
             extra={"webhook": True},
         )
+    else:
+        await ctx.send(
+            "Spawn failed. Check the bot's channel permissions and re-upload this haven's spawn image if it is missing.",
+            ephemeral=True,
+        )
 
 
 @balls.command()
