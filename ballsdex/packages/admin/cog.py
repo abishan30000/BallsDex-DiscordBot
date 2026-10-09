@@ -153,7 +153,25 @@ class Admin(commands.Cog):
         """
         await ctx.send_help(ctx.command)
 
-    @admin.command(with_app_command=False)
+    @app_commands.command(name="syncslash", description="Synchronize admin commands in this server")
+@app_commands.guild_only()
+async def syncslash_app(self, interaction: discord.Interaction["BallsDexBot"]):
+        """Owner-only slash bootstrap for servers where prefix commands are unavailable."""
+    assert interaction.guild
+    if not await self.bot.is_owner(interaction.user):
+                await interaction.response.send_message("Only a bot owner can run this command.", ephemeral=True)
+                return
+            await interaction.response.defer(ephemeral=True)
+    self.bot.tree.add_command(self.admin.app_command, guild=interaction.guild, override=True)
+    await self.bot.tree.sync(guild=interaction.guild)
+    await GuildConfig.objects.aupdate_or_create(
+                guild_id=interaction.guild.id, defaults={"guild_id": interaction.guild.id, "admin_command_synced": True}
+    )
+    await interaction.followup.send("Admin slash commands are now synchronized in this server.", ephemeral=True)
+
+
+@admin.command(with_app_command=False)
+
     @commands.is_owner()
     @commands.guild_only()
     async def syncslash(self, ctx: commands.Context["BallsDexBot"]):
