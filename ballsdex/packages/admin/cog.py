@@ -138,10 +138,12 @@ class Admin(commands.Cog):
                 "guild_id", flat=True
             )
         ]
-        self.bot.tree.add_command(self.admin.app_command, guilds=guilds)
+        self.bot.tree.add_command(self.admin.app_command, override=True)
+        
 
     @commands.hybrid_group()
-    @app_commands.guilds(0)
+
+
     
     @app_commands.check(_app_admin_channel_allowed)
     @commands.check(_admin_channel_allowed)
