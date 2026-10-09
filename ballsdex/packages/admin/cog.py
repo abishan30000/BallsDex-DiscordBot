@@ -5,11 +5,10 @@ from typing import TYPE_CHECKING, cast
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import ActionRow, Button, Container, Section, TextDisplay
+from discord.ui import Button, Container, Section, TextDisplay
 
 from ballsdex.core.discord import LayoutView
 from ballsdex.core.utils import checks
-from ballsdex.core.utils.buttons import ConfirmChoiceView
 from ballsdex.core.utils.menus import (
     ItemFormatter,
     ListSource,
@@ -37,55 +36,6 @@ if TYPE_CHECKING:
     from ballsdex.packages.trade.cog import Trade
 
 log = logging.getLogger("ballsdex.packages.admin")
-
-class SyncView(LayoutView):
-    def __init__(self, cog: "Admin", *, timeout: float | None = 180) -> None:
-        super().__init__(timeout=timeout)
-        self.cog = cog
-
-    text = TextDisplay("Admin commands are already synced here. What would you like to do?")
-    action_row = ActionRow()
-
-    @action_row.button(
-        label="Synchronize",
-        style=discord.ButtonStyle.primary,
-        emoji="\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}",
-    )
-    async def sync(self, interaction: discord.Interaction["BallsDexBot"], button: Button):
-        assert interaction.guild
-        self.stop()
-        await interaction.response.defer()
-        if not interaction.client.tree.get_command("admin", guild=interaction.guild):
-            interaction.client.tree.add_command(self.cog.admin.app_command, guild=interaction.guild)
-        await interaction.client.tree.sync(guild=interaction.guild)
-        await GuildConfig.objects.aupdate_or_create(
-            guild_id=interaction.guild.id, defaults={"guild_id": interaction.guild.id, "admin_command_synced": True}
-        )
-        self.sync.disabled = True
-        self.remove.disabled = True
-        self.text.content += (
-            "\n\nCommands have been refreshed. You may need to reload your Discord client to see the changes applied."
-        )
-        await interaction.edit_original_response(view=self)
-
-    @action_row.button(
-        label="Remove", style=discord.ButtonStyle.danger, emoji="\N{HEAVY MULTIPLICATION X}\N{VARIATION SELECTOR-16}"
-    )
-    async def remove(self, interaction: discord.Interaction["BallsDexBot"], button: Button):
-        assert interaction.guild
-        self.stop()
-        await interaction.response.defer()
-        interaction.client.tree.remove_command("admin", guild=interaction.guild)
-        await interaction.client.tree.sync(guild=interaction.guild)
-        await GuildConfig.objects.filter(guild_id=interaction.guild.id).aupdate(admin_command_synced=True)
-        self.sync.disabled = True
-        self.remove.disabled = True
-        self.text.content += (
-            "\n\nCommands have been removed. You may need to reload your Discord client to see the changes applied."
-        )
-        await interaction.edit_original_response(view=self)
-        log.info(f"Admin commands removed from guild {interaction.guild.id} by {interaction.user}")
-
 
 class Admin(commands.Cog):
     """
@@ -118,62 +68,51 @@ class Admin(commands.Cog):
             )
             interaction.extras["handled"] = True
 
+    async def remove_legacy_guild_admin(self, guild: discord.Guild) -> bool:
+        """Remove the old guild copy so only the global /admin command remains."""
+        commands = await self.bot.tree.fetch_commands(guild=guild)
+        if not any(command.name == "admin" for command in commands):
+            return False
+        self.bot.tree.remove_command("admin", guild=guild)
+        await self.bot.tree.sync(guild=guild)
+        await GuildConfig.objects.filter(guild_id=guild.id).aupdate(admin_command_synced=False)
+        log.info("Removed duplicate guild /admin command from %s", guild.id)
+        return True
+
+    async def cog_load(self):
+        for guild in self.bot.guilds:
+            try:
+                await self.remove_legacy_guild_admin(guild)
+            except discord.HTTPException:
+                log.exception("Could not remove duplicate guild /admin command from %s", guild.id)
+
     @commands.hybrid_group()
     @checks.is_staff()
     async def admin(self, ctx: commands.Context):
         """Bot admin commands."""
         await ctx.send_help(ctx.command)
 
-    @app_commands.command(name="syncslash", description="Synchronize admin commands in this server")
+    @app_commands.command(name="syncslash", description="Remove duplicate admin commands in this server")
     @app_commands.guild_only()
     async def syncslash_app(self, interaction: discord.Interaction["BallsDexBot"]):
-        """Owner-only slash bootstrap for servers where prefix commands are unavailable."""
+        """Remove the old guild copy of /admin from this server."""
         assert interaction.guild
         if not await self.bot.is_owner(interaction.user):
             await interaction.response.send_message("Only a bot owner can run this command.", ephemeral=True)
             return
         await interaction.response.defer(ephemeral=True)
-        self.bot.tree.add_command(self.admin.app_command, guild=interaction.guild, override=True)
-        await self.bot.tree.sync(guild=interaction.guild)
-        await GuildConfig.objects.aupdate_or_create(
-            guild_id=interaction.guild.id, defaults={"guild_id": interaction.guild.id, "admin_command_synced": True}
-        )
-        await interaction.followup.send("Admin slash commands are now synchronized in this server.", ephemeral=True)
+        removed = await self.remove_legacy_guild_admin(interaction.guild)
+        message = "Duplicate admin command removed." if removed else "No duplicate admin command found."
+        await interaction.followup.send(message, ephemeral=True)
 
     @admin.command(with_app_command=False)
     @commands.is_owner()
     @commands.guild_only()
     async def syncslash(self, ctx: commands.Context["BallsDexBot"]):
-        """
-        Synchronize all the admin commands in the current server, or remove them if already existing.
-        """
+        """Remove the old guild copy of /admin from this server."""
         assert ctx.guild
-        commands = await self.bot.tree.fetch_commands(guild=ctx.guild)
-        if commands:
-            view = SyncView(self)
-            await ctx.send(view=view)
-        else:
-            view = ConfirmChoiceView(ctx, accept_message="Registering commands...")
-            await ctx.send(
-                "Would you like to add admin slash commands in this server? "
-                "They can only be used with the appropriate Django permissions",
-                view=view,
-            )
-            await view.wait()
-            if not view.value:
-                return
-            async with ctx.typing():
-                self.bot.tree.add_command(self.admin.app_command, guild=ctx.guild, override=True)
-                await self.bot.tree.sync(guild=ctx.guild)
-                log.info(f"Admin commands added to guild {ctx.guild.id} by {ctx.author}")
-                await ctx.send(
-                    "Admin slash commands added.\nYou need admin permissions in this server to view them "
-                    f"(this can be changed [here](discord://-/guilds/{ctx.guild.id}/settings/integrations)). You might "
-                    "need to refresh your Discord client to view them."
-                )
-                await GuildConfig.objects.aupdate_or_create(
-                    guild_id=ctx.guild.id, defaults={"guild_id": ctx.guild.id, "admin_command_synced": True}
-                )
+        removed = await self.remove_legacy_guild_admin(ctx.guild)
+        await ctx.send("Duplicate admin command removed." if removed else "No duplicate admin command found.")
 
     @admin.command()
     @checks.is_superuser()
