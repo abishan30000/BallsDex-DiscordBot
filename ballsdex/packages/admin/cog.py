@@ -37,19 +37,6 @@ if TYPE_CHECKING:
     from ballsdex.packages.trade.cog import Trade
 
 log = logging.getLogger("ballsdex.packages.admin")
-async def _admin_channel_allowed(ctx: commands.Context["BallsDexBot"]) -> bool:
-        """Allow staff in configured admin channels and let bot owners work anywhere."""
-        if await ctx.bot.is_owner(ctx.author):
-                    return True
-                if not settings.admin_channel_ids:
-                            return True
-                        return bool(ctx.channel and ctx.channel.id in settings.inv_privacy_bypass_ids)
-
-
-async def _app_admin_channel_allowed(interaction: discord.Interaction["BallsDexBot"]) -> bool:
-        return await _admin_channel_allowed(await commands.Context.from_interaction(interaction))
-
-
 
 class SyncView(LayoutView):
     def __init__(self, cog: "Admin", *, timeout: float | None = 180) -> None:
@@ -132,48 +119,31 @@ class Admin(commands.Cog):
             interaction.extras["handled"] = True
 
     async def cog_load(self):
-        guilds = [
-            discord.Object(guild_id)
-            async for guild_id in GuildConfig.objects.filter(admin_command_synced=True).values_list(
-                "guild_id", flat=True
-            )
-        ]
         self.bot.tree.add_command(self.admin.app_command, override=True)
-        
 
     @commands.hybrid_group()
-
-
-    
-    @app_commands.check(_app_admin_channel_allowed)
-    @commands.check(_admin_channel_allowed)
-
     @checks.is_staff()
     async def admin(self, ctx: commands.Context):
-        """
-        Bot admin commands.
-        """
+        """Bot admin commands."""
         await ctx.send_help(ctx.command)
 
     @app_commands.command(name="syncslash", description="Synchronize admin commands in this server")
-@app_commands.guild_only()
-async def syncslash_app(self, interaction: discord.Interaction["BallsDexBot"]):
+    @app_commands.guild_only()
+    async def syncslash_app(self, interaction: discord.Interaction["BallsDexBot"]):
         """Owner-only slash bootstrap for servers where prefix commands are unavailable."""
-    assert interaction.guild
-    if not await self.bot.is_owner(interaction.user):
-                await interaction.response.send_message("Only a bot owner can run this command.", ephemeral=True)
-                return
-            await interaction.response.defer(ephemeral=True)
-    self.bot.tree.add_command(self.admin.app_command, guild=interaction.guild, override=True)
-    await self.bot.tree.sync(guild=interaction.guild)
-    await GuildConfig.objects.aupdate_or_create(
-                guild_id=interaction.guild.id, defaults={"guild_id": interaction.guild.id, "admin_command_synced": True}
-    )
-    await interaction.followup.send("Admin slash commands are now synchronized in this server.", ephemeral=True)
+        assert interaction.guild
+        if not await self.bot.is_owner(interaction.user):
+            await interaction.response.send_message("Only a bot owner can run this command.", ephemeral=True)
+            return
+        await interaction.response.defer(ephemeral=True)
+        self.bot.tree.add_command(self.admin.app_command, guild=interaction.guild, override=True)
+        await self.bot.tree.sync(guild=interaction.guild)
+        await GuildConfig.objects.aupdate_or_create(
+            guild_id=interaction.guild.id, defaults={"guild_id": interaction.guild.id, "admin_command_synced": True}
+        )
+        await interaction.followup.send("Admin slash commands are now synchronized in this server.", ephemeral=True)
 
-
-@admin.command(with_app_command=False)
-
+    @admin.command(with_app_command=False)
     @commands.is_owner()
     @commands.guild_only()
     async def syncslash(self, ctx: commands.Context["BallsDexBot"]):
