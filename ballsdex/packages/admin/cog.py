@@ -37,6 +37,18 @@ if TYPE_CHECKING:
     from ballsdex.packages.trade.cog import Trade
 
 log = logging.getLogger("ballsdex.packages.admin")
+async def _admin_channel_allowed(ctx: commands.Context["BallsDexBot"]) -> bool:
+        """Allow staff in configured admin channels and let bot owners work anywhere."""
+        if await ctx.bot.is_owner(ctx.author):
+                    return True
+                if not settings.admin_channel_ids:
+                            return True
+                        return bool(ctx.channel and ctx.channel.id in settings.inv_privacy_bypass_ids)
+
+
+async def _app_admin_channel_allowed(interaction: discord.Interaction["BallsDexBot"]) -> bool:
+        return await _admin_channel_allowed(await commands.Context.from_interaction(interaction))
+
 
 
 class SyncView(LayoutView):
