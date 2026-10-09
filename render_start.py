@@ -5,11 +5,12 @@ import subprocess
 import sys
 import threading
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "admin_panel.settings.render")
+os.environ["DJANGO_SETTINGS_MODULE"] = "admin_panel.settings.render"
 os.environ.setdefault("BALLSDEX_LOG_DIR", "/tmp/ballsdex")
+os.environ.setdefault("MEDIA_ROOT", "/tmp/ballsdex-media")
 os.environ.setdefault("BALLSDEXBOT_EXTRA_TOML", "/code/config/extra.toml")
-if not os.path.exists(os.environ["BALLSDEXBOT_EXTRA_TOML"]) and os.path.exists("/code/admin_panel/config/extra.toml"):
-    os.environ["BALLSDEXBOT_EXTRA_TOML"] = "/code/admin_panel/config/extra.toml"
+if os.path.exists("/code/config/extra.toml"):
+    os.environ["BALLSDEXBOT_EXTRA_TOML"] = "/code/config/extra.toml"
 if not os.environ.get("BALLSDEXBOT_DB_URL") and os.environ.get("DATABASE_URL"):
     os.environ["BALLSDEXBOT_DB_URL"] = os.environ["DATABASE_URL"]
 
@@ -26,10 +27,13 @@ def main():
     django.setup()
     from settings.models import Settings
 
-    Settings.objects.get_or_create(pk=1)
+    setting, _ = Settings.objects.get_or_create(pk=1)
 
     bot = None
     if os.environ.get("BALLSDEXBOT_TOKEN"):
+        if setting.bot_token != os.environ["BALLSDEXBOT_TOKEN"]:
+            setting.bot_token = os.environ["BALLSDEXBOT_TOKEN"]
+            setting.save(update_fields=["bot_token"])
         bot = subprocess.Popen(
             [sys.executable, "-m", "ballsdex", "--dev"],
             cwd="/code/admin_panel",
