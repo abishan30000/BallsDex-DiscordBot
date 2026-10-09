@@ -142,8 +142,10 @@ class Admin(commands.Cog):
 
     @commands.hybrid_group()
     @app_commands.guilds(0)
-    @app_commands.default_permissions(administrator=True)
-    @commands.has_permissions(administrator=True)
+    
+    @app_commands.check(_app_admin_channel_allowed)
+    @commands.check(_admin_channel_allowed)
+
     @checks.is_staff()
     async def admin(self, ctx: commands.Context):
         """
