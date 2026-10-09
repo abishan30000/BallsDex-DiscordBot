@@ -7,11 +7,13 @@ import threading
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "admin_panel.settings.render"
 os.environ.setdefault("BALLSDEX_LOG_DIR", "/tmp/ballsdex")
+os.environ.setdefault("MEDIA_ROOT", "/tmp/ballsdex-media")
 os.environ.setdefault("BALLSDEXBOT_EXTRA_TOML", "/code/config/extra.toml")
 if os.path.exists("/code/config/extra.toml"):
     os.environ["BALLSDEXBOT_EXTRA_TOML"] = "/code/config/extra.toml"
 if not os.environ.get("BALLSDEXBOT_DB_URL") and os.environ.get("DATABASE_URL"):
     os.environ["BALLSDEXBOT_DB_URL"] = os.environ["DATABASE_URL"]
+
 
 def main():
     import django
