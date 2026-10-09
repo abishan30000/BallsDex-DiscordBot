@@ -118,9 +118,6 @@ class Admin(commands.Cog):
             )
             interaction.extras["handled"] = True
 
-    async def cog_load(self):
-        self.bot.tree.add_command(self.admin.app_command, override=True)
-
     @commands.hybrid_group()
     @checks.is_staff()
     async def admin(self, ctx: commands.Context):
