@@ -37,7 +37,6 @@ if TYPE_CHECKING:
 
 log = logging.getLogger("ballsdex.packages.admin")
 
-
 class Admin(commands.Cog):
     """
     Bot admin commands.
@@ -90,12 +89,10 @@ class Admin(commands.Cog):
     @commands.hybrid_group()
     @checks.is_staff()
     async def admin(self, ctx: commands.Context):
-        """
-        Bot admin commands.
-        """
+        """Bot admin commands."""
         await ctx.send_help(ctx.command)
 
-    @app_commands.command(name="syncslash", description="Synchronize admin commands in this server")
+    @app_commands.command(name="syncslash", description="Remove duplicate admin commands in this server")
     @app_commands.guild_only()
     async def syncslash_app(self, interaction: discord.Interaction["BallsDexBot"]):
         """Remove the old guild copy of /admin from this server."""

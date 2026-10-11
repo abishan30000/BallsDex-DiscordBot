@@ -14,6 +14,7 @@ if os.path.exists("/code/config/extra.toml"):
 if not os.environ.get("BALLSDEXBOT_DB_URL") and os.environ.get("DATABASE_URL"):
     os.environ["BALLSDEXBOT_DB_URL"] = os.environ["DATABASE_URL"]
 
+
 def main():
     import django
     import uvicorn
