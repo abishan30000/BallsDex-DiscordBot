@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.forms import Textarea
 from django.utils.safestring import mark_safe
 
-from ..models import Special
+from ..models import PACK_168Y_SPECIAL_CREDITS, Special
 
 if TYPE_CHECKING:
     from django.db.models import Field
@@ -33,6 +33,12 @@ class SpecialAdmin(admin.ModelAdmin):
     list_filter = ["hidden", "tradeable"]
 
     search_fields = ["name", "catch_phrase", "pk"]
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        if request.resolver_match and request.resolver_match.url_name == "bd_models_special_changelist":
+            return queryset.exclude(credits=PACK_168Y_SPECIAL_CREDITS)
+        return queryset
 
     @admin.display(description="Emoji")
     def emoji_display(self, obj: Special):

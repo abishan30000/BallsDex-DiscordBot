@@ -56,6 +56,7 @@ class BulkGiveFlags(FlagConverter):
     special: SpecialTransform | None = flag(description="A special event to set on each copy")
     health_bonus: int | None = flag(description="Force a specific health bonus percentage")
     attack_bonus: int | None = flag(description="Force a specific attack bonus percentage")
+    key: str | None = flag(description="Optional pack key. Enter 168y to grant its fixed event collection.")
 
 
 class BallsCountFlags(FlagConverter):
