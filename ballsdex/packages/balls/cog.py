@@ -1209,16 +1209,24 @@ class Balls(commands.GroupCog, group_name=settings.balls_slash_name):
         )
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.display_avatar.url)
         if countryball:
-            try:
-                image_file = await sync_to_async(countryball.collection_card.open, thread_sensitive=True)("rb")
-            except (OSError, ValueError):
-                log.exception("Could not open the collection image for %s", countryball.country)
-                await interaction.followup.send(embed=embed)
-            else:
+            image_file = None
+            for image_field in (countryball.wild_card, countryball.collection_card):
+                if not image_field:
+                    continue
+                try:
+                    image_file = await sync_to_async(image_field.open, thread_sensitive=True)("rb")
+                except (OSError, ValueError):
+                    log.warning("Could not open an image for %s", countryball.country, exc_info=True)
+                else:
+                    break
+
+            if image_file:
                 embed.set_thumbnail(url="attachment://countryball.png")
                 await interaction.followup.send(
                     embed=embed,
                     file=discord.File(image_file, filename="countryball.png"),
                 )
+            else:
+                await interaction.followup.send(embed=embed)
         else:
             await interaction.followup.send(embed=embed)
