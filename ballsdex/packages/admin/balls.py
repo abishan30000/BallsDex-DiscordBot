@@ -207,54 +207,78 @@ async def give(ctx: commands.Context[BallsDexBot], user: discord.User, *, flags:
 @balls.command(name="bulk-give")
 @checks.has_permissions("bd_models.add_ballinstance")
 async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User, *, flags: BulkGiveFlags):
-    """Give a user multiple copies of a countryball with unique IDs and individual stats."""
+    """Give a user multiple balls, choosing rarity-weighted random balls when none is specified."""
     await ctx.defer(ephemeral=True)
 
+    countryballs_cog = cast("CountryBallsSpawner | None", ctx.bot.get_cog("CountryBallsSpawner"))
+    if flags.countryball is None and countryballs_cog is None:
+        await ctx.send(
+            "Random bulk-give is unavailable because the countryballs package is not loaded.",
+            ephemeral=True,
+        )
+        return
+
     player, _ = await Player.objects.aget_or_create(discord_id=user.id)
+
     def create_instances(batch: list[BallInstance]) -> list[BallInstance]:
         with transaction.atomic():
             return BallInstance.objects.bulk_create(batch, batch_size=1000)
 
+    ball_label = flags.countryball.country if flags.countryball else "Random (rarity weighted)"
+    special_label = flags.special.name if flags.special else ("Rarity roll" if flags.countryball is None else "None")
     progress_message = await ctx.send(
         f"Bulk grant in progress for {user.mention}\n"
-        f"{settings.collectible_name.title()}: {flags.countryball.country} 0/{flags.n} granted (0%)",
+        f"{settings.collectible_name.title()}: {ball_label} 0/{flags.n} granted (0%)",
         ephemeral=True,
     )
     report = [
         f"Bulk grant to {user} ({user.id})",
-        f"Countryball: {flags.countryball.country}",
+        f"Countryball: {ball_label}",
         f"Copies: {flags.n}",
-        f"Special: {flags.special.name if flags.special else 'None'}",
         "",
-        "ID | Attack (bonus) | Health (bonus)",
+        "ID | Countryball | Special | Attack (bonus) | Health (bonus)",
     ]
     created_count = 0
     batch_size = 1000
     for start in range(0, flags.n, batch_size):
         count = min(batch_size, flags.n - start)
-        batch = [
-            BallInstance(
-                ball=flags.countryball,
-                player=player,
-                attack_bonus=(
-                    flags.attack_bonus
-                    if flags.attack_bonus is not None
-                    else random.randint(-settings.max_attack_bonus, settings.max_attack_bonus)
-                ),
-                health_bonus=(
-                    flags.health_bonus
-                    if flags.health_bonus is not None
-                    else random.randint(-settings.max_health_bonus, settings.max_health_bonus)
-                ),
-                special=flags.special,
+        batch: list[BallInstance] = []
+        for _ in range(count):
+            if flags.countryball:
+                countryball = flags.countryball
+            else:
+                assert countryballs_cog is not None
+                countryball = (await countryballs_cog.countryball_cls.get_random(ctx.bot)).model
+
+            special = flags.special
+            if special is None and flags.countryball is None:
+                assert countryballs_cog is not None
+                special = countryballs_cog.countryball_cls.get_random_special()
+
+            batch.append(
+                BallInstance(
+                    ball=countryball,
+                    player=player,
+                    attack_bonus=(
+                        flags.attack_bonus
+                        if flags.attack_bonus is not None
+                        else random.randint(-settings.max_attack_bonus, settings.max_attack_bonus)
+                    ),
+                    health_bonus=(
+                        flags.health_bonus
+                        if flags.health_bonus is not None
+                        else random.randint(-settings.max_health_bonus, settings.max_health_bonus)
+                    ),
+                    special=special,
+                )
             )
-            for _ in range(count)
-        ]
         created_batch = await sync_to_async(create_instances, thread_sensitive=True)(batch)
         created_count += len(created_batch)
         for instance in created_batch:
             report.append(
-                f"#{instance.pk:X} | {instance.attack} ({instance.attack_bonus:+d}%) | "
+                f"#{instance.pk:X} | {instance.countryball.country} | "
+                f"{instance.special.name if instance.special else 'None'} | "
+                f"{instance.attack} ({instance.attack_bonus:+d}%) | "
                 f"{instance.health} ({instance.health_bonus:+d}%)"
             )
 
@@ -263,7 +287,7 @@ async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User
             await progress_message.edit(
                 content=(
                     f"Bulk grant in progress for {user.mention}\n"
-                    f"{settings.collectible_name.title()}: {flags.countryball.country} "
+                    f"{settings.collectible_name.title()}: {ball_label} "
                     f"{created_count}/{flags.n} granted ({percent}%)"
                 )
             )
@@ -275,16 +299,16 @@ async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User
     summary = (
         f"**Bulk grant complete**\n"
         f"Granted **{created_count} {settings.plural_collectible_name}** to {user.mention}.\n"
-        f"Countryball: **{flags.countryball.country}**\n"
-        f"Special: **{flags.special.name if flags.special else 'None'}**\n"
-        f"Every copy has a unique ID. The attached report lists each ID and its final ATK/HP stats."
+        f"Countryball: **{ball_label}**\n"
+        f"Special: **{special_label}**\n"
+        f"Every copy has a unique ID. The attached report lists each ball, special, and its final ATK/HP stats."
     )
     await progress_message.edit(content=summary)
     await ctx.send("Per-copy IDs and stats:", file=report_file, ephemeral=True)
     log.info(
         f"{ctx.author} bulk-gave {created_count} {settings.collectible_name} "
-        f"{flags.countryball.country} to {user} ({user.id}). "
-        f"Special={flags.special.name if flags.special else None}.",
+        f"{ball_label} to {user} ({user.id}). "
+        f"Special={special_label}.",
         extra={"webhook": True},
     )
 

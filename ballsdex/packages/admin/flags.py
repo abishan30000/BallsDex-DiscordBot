@@ -47,7 +47,11 @@ class GiveBallFlags(FlagConverter):
 
 
 class BulkGiveFlags(FlagConverter):
-    countryball: BallTransform = flag(positional=True, description="The countryball to give")
+    countryball: BallTransform | None = flag(
+        positional=True,
+        description="The countryball to give. Leave blank for rarity-weighted random balls and special rolls.",
+        default=None,
+    )
     n: Range[int, 1, 100000] = flag(description="How many copies to give (up to 100,000)", default=1)
     special: SpecialTransform | None = flag(description="A special event to set on each copy")
     health_bonus: int | None = flag(description="Force a specific health bonus percentage")
