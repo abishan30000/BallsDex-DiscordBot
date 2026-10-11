@@ -357,6 +357,8 @@ class BallSpawnView(LayoutView):
             log.warning(f"Missing permission to spawn ball in channel {channel}.")
         except discord.HTTPException:
             log.error("Failed to spawn ball", exc_info=True)
+        except FileNotFoundError:
+            log.error("Spawn image is missing for %s: %s", self.model.country, self.model.wild_card.name)
         return False
 
     def is_name_valid(self, text: str) -> bool:

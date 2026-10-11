@@ -46,6 +46,14 @@ class GiveBallFlags(FlagConverter):
     attack_bonus: int | None = flag(description="Force a specific attack bonus percentage")
 
 
+class BulkGiveFlags(FlagConverter):
+    countryball: BallTransform = flag(positional=True, description="The countryball to give")
+    n: Range[int, 1, 100] = flag(description="How many copies to give", default=1)
+    special: SpecialTransform | None = flag(description="A special event to set on each copy")
+    health_bonus: int | None = flag(description="Force a specific health bonus percentage")
+    attack_bonus: int | None = flag(description="Force a specific attack bonus percentage")
+
+
 class BallsCountFlags(FlagConverter):
     user: discord.User | None = flag(description="The player whose countryballs you are counting")
     countryball: BallTransform | None = flag(description="Restrict countring to a specific countryball")

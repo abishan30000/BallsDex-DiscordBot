@@ -18,6 +18,7 @@ from ballsdex.core.utils.transformers import (
     BallEnabledTransform,
     BallGroupTransform,
     BallInstanceTransform,
+    BallTransform,
     EconomyTransform,
     RegimeTransform,
     SpecialEnabledTransform,
@@ -1135,7 +1136,7 @@ class Balls(commands.GroupCog, group_name=settings.balls_slash_name):
     async def collection(
         self,
         interaction: discord.Interaction["BallsDexBot"],
-        countryball: BallEnabledTransform | None = None,
+        countryball: BallTransform | None = None,
         filter: FilteringChoices | None = None,
         ephemeral: bool = False,
     ):
@@ -1145,7 +1146,7 @@ class Balls(commands.GroupCog, group_name=settings.balls_slash_name):
         Parameters
         ----------
         countryball: Ball
-            The countryball you want to see the collection of
+            The countryball you want to see the collection of, including disabled countryballs
         filter: FilteringChoices
             Filter the collection by a specific filter.
         ephemeral: bool

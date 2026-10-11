@@ -12,3 +12,8 @@ enabled = true
 location = "/code/extra/crafting"
 path = "crafting"
 enabled = true
+
+[[ballsdex.packages]]
+location = "git+https://github.com/MoOfficial0000/BossPackageBD.git@BossPackageBD-V3"
+path = "boss"
+enabled = true

@@ -1,4 +1,5 @@
 import asyncio
+import io
 import logging
 import random
 import re
@@ -19,7 +20,7 @@ from bd_models.models import Ball, BallInstance, Player, Special, Trade, TradeOb
 from settings.models import settings
 from settings.utils import format_currency
 
-from .flags import BallsCountFlags, CreateFlags, GiveBallFlags, SpawnFlags
+from .flags import BallsCountFlags, BulkGiveFlags, CreateFlags, GiveBallFlags, SpawnFlags
 
 if TYPE_CHECKING:
     from ballsdex.packages.countryballs.cog import CountryBallsSpawner
@@ -153,6 +154,11 @@ async def spawn(ctx: commands.Context[BallsDexBot], *, flags: SpawnFlags):
             f"in {flags.channel or ctx.channel}" + (f" ({', '.join(special_attrs)})." if special_attrs else "."),
             extra={"webhook": True},
         )
+    else:
+        await ctx.send(
+            "Spawn failed. Check the bot's channel permissions and re-upload this haven's spawn image if it is missing.",
+            ephemeral=True,
+        )
 
 
 @balls.command()
@@ -194,6 +200,89 @@ async def give(ctx: commands.Context[BallsDexBot], user: discord.User, *, flags:
         f"{ctx.author} gave {settings.collectible_name} {flags.countryball.country} (`{instance.pk:0X}`) "
         f"to {user}. (Special={flags.special.name if flags.special else None} "
         f"ATK={instance.attack_bonus:+d} HP={instance.health_bonus:+d}).",
+        extra={"webhook": True},
+    )
+
+
+@balls.command(name="bulk-give")
+@checks.has_permissions("bd_models.add_ballinstance")
+async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User, *, flags: BulkGiveFlags):
+    """Give a user multiple copies of a countryball with unique IDs and individual stats."""
+    await ctx.defer(ephemeral=True)
+
+    player, _ = await Player.objects.aget_or_create(discord_id=user.id)
+    instances = [
+        BallInstance(
+            ball=flags.countryball,
+            player=player,
+            attack_bonus=(
+                flags.attack_bonus
+                if flags.attack_bonus is not None
+                else random.randint(-settings.max_attack_bonus, settings.max_attack_bonus)
+            ),
+            health_bonus=(
+                flags.health_bonus
+                if flags.health_bonus is not None
+                else random.randint(-settings.max_health_bonus, settings.max_health_bonus)
+            ),
+            special=flags.special,
+        )
+        for _ in range(flags.n)
+    ]
+
+    def create_instances(batch: list[BallInstance]) -> list[BallInstance]:
+        with transaction.atomic():
+            return BallInstance.objects.bulk_create(batch, batch_size=10)
+
+    progress_message = await ctx.send(
+        f"Bulk grant in progress for {user.mention}\n"
+        f"{settings.collectible_name.title()}: {flags.countryball.country} 0/{flags.n} granted (0%)",
+        ephemeral=True,
+    )
+    created_instances: list[BallInstance] = []
+    for start in range(0, len(instances), 10):
+        batch = instances[start : start + 10]
+        created_instances.extend(await sync_to_async(create_instances, thread_sensitive=True)(batch))
+        percent = round(len(created_instances) / flags.n * 100)
+        await progress_message.edit(
+            content=(
+                f"Bulk grant in progress for {user.mention}\n"
+                f"{settings.collectible_name.title()}: {flags.countryball.country} "
+                f"{len(created_instances)}/{flags.n} granted ({percent}%)"
+            )
+        )
+
+    report = [
+        f"Bulk grant to {user} ({user.id})",
+        f"Countryball: {flags.countryball.country}",
+        f"Copies: {len(created_instances)}",
+        f"Special: {flags.special.name if flags.special else 'None'}",
+        "",
+        "ID | Attack (bonus) | Health (bonus)",
+    ]
+    for instance in created_instances:
+        report.append(
+            f"#{instance.pk:X} | {instance.attack} ({instance.attack_bonus:+d}%) | "
+            f"{instance.health} ({instance.health_bonus:+d}%)"
+        )
+
+    report_file = discord.File(
+        io.BytesIO("\n".join(report).encode("utf-8")),
+        filename=f"bulk-give-{user.id}.txt",
+    )
+    summary = (
+        f"**Bulk grant complete**\n"
+        f"Granted **{len(created_instances)} {settings.plural_collectible_name}** to {user.mention}.\n"
+        f"Countryball: **{flags.countryball.country}**\n"
+        f"Special: **{flags.special.name if flags.special else 'None'}**\n"
+        f"Every copy has a unique ID. The attached report lists each ID and its final ATK/HP stats."
+    )
+    await progress_message.edit(content=summary)
+    await ctx.send("Per-copy IDs and stats:", file=report_file, ephemeral=True)
+    log.info(
+        f"{ctx.author} bulk-gave {len(created_instances)} {settings.collectible_name} "
+        f"{flags.countryball.country} to {user} ({user.id}). "
+        f"Special={flags.special.name if flags.special else None}.",
         extra={"webhook": True},
     )
 
