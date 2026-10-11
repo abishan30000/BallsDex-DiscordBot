@@ -18,13 +18,14 @@ from ballsdex.core.utils.menus import (
     dynamic_chunks,
     iter_to_async,
 )
-from bd_models.models import Ball, GuildConfig
+from bd_models.models import Ball, GuildConfig, Special, specials as special_cache
 from settings.models import settings
 
 from .balls import balls as balls_group
 from .blacklist import blacklist as blacklist_group
 from .blacklist import blacklistguild as blacklist_guild_group
 from .flags import RarityFlags, StatusFlags
+from .haven import haven as haven_group
 from .history import history as history_group
 from .info import info as info_group
 from .logs import logs as logs_group
@@ -52,6 +53,7 @@ class Admin(commands.Cog):
         self.admin.add_command(history_group)
         self.admin.add_command(logs_group)
         self.admin.add_command(money_group)
+        self.admin.add_command(haven_group)
 
     async def cog_check(self, ctx: commands.Context["BallsDexBot"]) -> bool:
         return await checks.is_staff().predicate(ctx)
@@ -91,6 +93,34 @@ class Admin(commands.Cog):
     async def admin(self, ctx: commands.Context):
         """Bot admin commands."""
         await ctx.send_help(ctx.command)
+
+    @admin.command()
+    @checks.is_superuser()
+    async def fix(self, ctx: commands.Context["BallsDexBot"]):
+        """Apply the requested special emoji and visibility corrections."""
+        updates = (
+            ("Lunar New Year 2025", "🧧", False),
+            ("Earth", "🪨", False),
+            ("Boss", "⚔️", False),
+            ("Ballsdex Season 1", None, True),
+        )
+        results: list[str] = []
+        for name, emoji, hide in updates:
+            queryset = Special.objects.filter(name__iexact=name)
+            changed = await queryset.aupdate(**({"hidden": True} if hide else {"emoji": emoji}))
+            for special in special_cache.values():
+                if special.name.casefold() == name.casefold():
+                    if emoji is not None:
+                        special.emoji = emoji
+                    if hide:
+                        special.hidden = True
+            if hide:
+                results.append(f"{name}: hidden from collection ({changed} updated)")
+            elif changed:
+                results.append(f"{name}: emoji set to {emoji} ({changed} updated)")
+            else:
+                results.append(f"{name}: no matching special found")
+        await ctx.send("Special fixes complete.\n" + "\n".join(results), ephemeral=True)
 
     @app_commands.command(name="syncslash", description="Remove duplicate admin commands in this server")
     @app_commands.guild_only()

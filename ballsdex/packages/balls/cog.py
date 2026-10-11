@@ -1230,7 +1230,7 @@ class Balls(commands.GroupCog, group_name=settings.balls_slash_name):
                     break
 
             if image_data:
-                embed.set_thumbnail(url=f"attachment://{image_name}")
+                embed.set_image(url=f"attachment://{image_name}")
                 await interaction.followup.send(
                     embed=embed,
                     file=discord.File(io.BytesIO(image_data), filename=image_name),

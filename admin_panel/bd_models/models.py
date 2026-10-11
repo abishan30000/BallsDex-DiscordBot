@@ -256,9 +256,6 @@ class TradeableManager[T: models.Model](BallInstanceManager[T]):
         return super().get_queryset().filter(tradeable=True)
 
 
-PACK_168Y_SPECIAL_CREDITS = "Bulk code 168y"
-
-
 class Special(models.Model):
     name = models.CharField(max_length=64)
     catch_phrase = models.CharField(

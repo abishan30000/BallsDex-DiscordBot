@@ -17,7 +17,6 @@ from ballsdex.core.bot import BallsDexBot
 from ballsdex.core.utils import checks
 from ballsdex.core.utils.buttons import ConfirmChoiceView
 from bd_models.models import (
-    PACK_168Y_SPECIAL_CREDITS,
     Ball,
     BallInstance,
     Player,
@@ -37,77 +36,6 @@ if TYPE_CHECKING:
 
 log = logging.getLogger("ballsdex.packages.admin.balls")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
-BULK_GIVE_KEY = "168y"
-BULK_168Y_SPECIALS = (
-    ("Spring 2025", 13_033, "🌸"),
-    ("Summer 2023", 8_980, "☀️"),
-    ("Christmas 2023", 7_078, "🎄"),
-    ("Easter 2023", 6_812, "🥚"),
-    ("Thanksgiving 2023", 5_786, "🦃"),
-    ("Fire", 4_336, "🔥"),
-    ("Halloween 2023", 3_686, "👻"),
-    ("Christmas 2022", 3_331, "🎄"),
-    ("Pride", 2_706, "🏳️‍🌈"),
-    ("Shiny", 2_128, "✨"),
-    ("Christmas 2024", 1_912, "🎁"),
-    ("Earth", 1_515, "🌍"),
-    ("Halloween 2024", 1_380, "👻"),
-    ("Dia de Muertos 2025", 1_358, "🕯️"),
-    ("Lunar New Year 2024", 1_324, "🏮"),
-    ("Birthday 2023", 1_204, "🎉"),
-    ("New Years 2025", 666, "🎆"),
-    ("Mythical", 482, "🌌"),
-    ("Water", 288, "🌊"),
-    ("Artemis Missions", 231, "🚀"),
-    ("Halloween 2022", 185, "🎃"),
-    ("Valentine 2020", 150, "💕"),
-    ("Mardi Gras 2026", 85, "🎭"),
-    ("World Cup 2026", 84, "⚽"),
-    ("May the 4th", 58, "🛸"),
-    ("Elemental", 37, "🔥"),
-    ("Tier 1 Collector", 33, "🏆"),
-    ("St Patrick's Day 2025", 28, "☘️"),
-    ("Boss", 20, "🏆"),
-    ("Secret Santa 2025", 17, "🎅"),
-    ("Ballsdex Games Souvenir", 16, "🎟️"),
-    ("Diamond", 13, "💎"),
-    ("Ballsdex Season 1", 6, "👑"),
-    ("Air", 6, "🌬️"),
-    ("Birthday 2024", 5, "🎂"),
-    ("Bronze", 5, "🥉"),
-    ("Tier 2 Collector", 3, "🏆"),
-    ("Gold", 2, "🥇"),
-    ("Event Greenland", 7, "👑"),
-)
-
-
-def _ensure_168y_specials() -> list[tuple[Special, int]]:
-    """Create or reuse the fixed event specials for the 168y bulk-give pack."""
-    result: list[tuple[Special, int]] = []
-    with transaction.atomic():
-        for name, amount, emoji in BULK_168Y_SPECIALS:
-            special = (
-                Special.objects.filter(name=name, credits=PACK_168Y_SPECIAL_CREDITS).order_by("pk").first()
-            )
-            if special is None:
-                special = Special.objects.create(
-                    name=name,
-                    rarity=0,
-                    emoji=emoji,
-                    tradeable=True,
-                    hidden=False,
-                    credits=PACK_168Y_SPECIAL_CREDITS,
-                )
-            else:
-                special.rarity = 0
-                special.emoji = emoji
-                special.tradeable = True
-                special.hidden = False
-                special.save(update_fields=("rarity", "emoji", "tradeable", "hidden"))
-            result.append((special, amount))
-    return result
-
-
 async def _spawn_bomb(
     ctx: commands.Context[BallsDexBot],
     countryball_cls: type["BallSpawnView"],
@@ -288,10 +216,6 @@ async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User
     """Give a user multiple balls, choosing rarity-weighted random balls when none is specified."""
     await ctx.defer(ephemeral=True)
 
-    if flags.key and flags.key != BULK_GIVE_KEY:
-        await ctx.send("That bulk-give key is not recognized.", ephemeral=True)
-        return
-
     countryballs_cog = cast("CountryBallsSpawner | None", ctx.bot.get_cog("CountryBallsSpawner"))
     if flags.countryball is None and countryballs_cog is None:
         await ctx.send(
@@ -302,26 +226,13 @@ async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User
 
     player, _ = await Player.objects.aget_or_create(discord_id=user.id)
 
-    pack_entries: list[tuple[Special, int]] = []
-    if flags.key == BULK_GIVE_KEY:
-        pack_entries = await sync_to_async(_ensure_168y_specials, thread_sensitive=True)()
-        for pack_special, _ in pack_entries:
-            special_cache[pack_special.pk] = pack_special
-        grant_plan = pack_entries
-    else:
-        grant_plan = [(flags.special, flags.n)]
-
     def create_instances(batch: list[BallInstance]) -> list[BallInstance]:
         with transaction.atomic():
             return BallInstance.objects.bulk_create(batch, batch_size=1000)
 
     ball_label = flags.countryball.country if flags.countryball else "Random (rarity weighted)"
-    total_count = sum(amount for _, amount in grant_plan)
-    special_label = (
-        "168y fixed collection pack"
-        if flags.key == BULK_GIVE_KEY
-        else flags.special.name if flags.special else ("Rarity roll" if flags.countryball is None else "None")
-    )
+    total_count = flags.n
+    special_label = flags.special.name if flags.special else ("Rarity roll" if flags.countryball is None else "None")
     progress_message = await ctx.send(
         f"Bulk grant in progress for {user.mention}\n"
         f"{settings.collectible_name.title()}: {ball_label} 0/{total_count} granted (0%)",
@@ -331,66 +242,64 @@ async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User
         f"Bulk grant to {user} ({user.id})",
         f"Countryball: {ball_label}",
         f"Copies: {total_count}",
-        f"Pack key: {flags.key or 'none'}",
         "",
         "ID | Countryball | Special | Attack (bonus) | Health (bonus)",
     ]
     created_count = 0
     batch_size = 1000
     last_reported_count = 0
-    for pack_special, pack_amount in grant_plan:
-        for start in range(0, pack_amount, batch_size):
-            count = min(batch_size, pack_amount - start)
-            batch: list[BallInstance] = []
-            for _ in range(count):
-                if flags.countryball:
-                    countryball = flags.countryball
-                else:
-                    assert countryballs_cog is not None
-                    countryball = (await countryballs_cog.countryball_cls.get_random(ctx.bot)).model
+    for start in range(0, flags.n, batch_size):
+        count = min(batch_size, flags.n - start)
+        batch: list[BallInstance] = []
+        for _ in range(count):
+            if flags.countryball:
+                countryball = flags.countryball
+            else:
+                assert countryballs_cog is not None
+                countryball = (await countryballs_cog.countryball_cls.get_random(ctx.bot)).model
 
-                special = pack_special if flags.key == BULK_GIVE_KEY else flags.special
-                if special is None and flags.countryball is None:
-                    assert countryballs_cog is not None
-                    special = countryballs_cog.countryball_cls.get_random_special()
+            special = flags.special
+            if special is None and flags.countryball is None:
+                assert countryballs_cog is not None
+                special = countryballs_cog.countryball_cls.get_random_special()
 
-                batch.append(
-                    BallInstance(
-                        ball=countryball,
-                        player=player,
-                        attack_bonus=(
-                            flags.attack_bonus
-                            if flags.attack_bonus is not None
-                            else random.randint(-settings.max_attack_bonus, settings.max_attack_bonus)
-                        ),
-                        health_bonus=(
-                            flags.health_bonus
-                            if flags.health_bonus is not None
-                            else random.randint(-settings.max_health_bonus, settings.max_health_bonus)
-                        ),
-                        special=special,
-                    )
+            batch.append(
+                BallInstance(
+                    ball=countryball,
+                    player=player,
+                    attack_bonus=(
+                        flags.attack_bonus
+                        if flags.attack_bonus is not None
+                        else random.randint(-settings.max_attack_bonus, settings.max_attack_bonus)
+                    ),
+                    health_bonus=(
+                        flags.health_bonus
+                        if flags.health_bonus is not None
+                        else random.randint(-settings.max_health_bonus, settings.max_health_bonus)
+                    ),
+                    special=special,
                 )
-            created_batch = await sync_to_async(create_instances, thread_sensitive=True)(batch)
-            created_count += len(created_batch)
-            for instance in created_batch:
-                report.append(
-                    f"#{instance.pk:X} | {instance.countryball.country} | "
-                    f"{instance.special.name if instance.special else 'None'} | "
-                    f"{instance.attack} ({instance.attack_bonus:+d}%) | "
-                    f"{instance.health} ({instance.health_bonus:+d}%)"
-                )
+            )
+        created_batch = await sync_to_async(create_instances, thread_sensitive=True)(batch)
+        created_count += len(created_batch)
+        for instance in created_batch:
+            report.append(
+                f"#{instance.pk:X} | {instance.countryball.country} | "
+                f"{instance.special.name if instance.special else 'None'} | "
+                f"{instance.attack} ({instance.attack_bonus:+d}%) | "
+                f"{instance.health} ({instance.health_bonus:+d}%)"
+            )
 
-            if created_count - last_reported_count >= 10_000 or created_count == total_count:
-                percent = round(created_count / total_count * 100)
-                await progress_message.edit(
-                    content=(
-                        f"Bulk grant in progress for {user.mention}\n"
-                        f"{settings.collectible_name.title()}: {ball_label} "
-                        f"{created_count}/{total_count} granted ({percent}%)"
-                    )
+        if created_count - last_reported_count >= 10_000 or created_count == flags.n:
+            percent = round(created_count / flags.n * 100)
+            await progress_message.edit(
+                content=(
+                    f"Bulk grant in progress for {user.mention}\n"
+                    f"{settings.collectible_name.title()}: {ball_label} "
+                    f"{created_count}/{flags.n} granted ({percent}%)"
                 )
-                last_reported_count = created_count
+            )
+            last_reported_count = created_count
 
     report_file = discord.File(
         io.BytesIO("\n".join(report).encode("utf-8")),
@@ -408,7 +317,7 @@ async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User
     log.info(
         f"{ctx.author} bulk-gave {created_count} {settings.collectible_name} "
         f"{ball_label} to {user} ({user.id}). "
-        f"Special={special_label}; key={flags.key or 'none'}.",
+        f"Special={special_label}.",
         extra={"webhook": True},
     )
 
@@ -438,11 +347,7 @@ async def balls_info(ctx: commands.Context[BallsDexBot], countryball_id: str):
         await TradeObject.objects.filter(ballinstance=ball).select_related("player").order_by("trade__date").afirst()
     )
     first_owner = first_trade_object.player if first_trade_object else ball.player
-    special_name = (
-        ball.special.name
-        if ball.special and ball.special.credits != PACK_168Y_SPECIAL_CREDITS
-        else None
-    )
+    special_name = ball.special.name if ball.special else None
     spawned_time = format_dt(ball.spawned_time, style="R") if ball.spawned_time else "N/A"
     catch_time = (
         (ball.catch_date - ball.spawned_time).total_seconds() if ball.catch_date and ball.spawned_time else "N/A"
