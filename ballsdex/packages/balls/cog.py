@@ -3,6 +3,7 @@ import logging
 from datetime import timedelta
 from typing import TYPE_CHECKING, cast
 
+from asgiref.sync import sync_to_async
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -1208,9 +1209,16 @@ class Balls(commands.GroupCog, group_name=settings.balls_slash_name):
         )
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.display_avatar.url)
         if countryball:
-            file_location = countryball.wild_card.path
-            file = discord.File(file_location, filename="countryball.png")
-            embed.set_thumbnail(url="attachment://countryball.png")
-            await interaction.followup.send(embed=embed, file=file)
+            try:
+                image_file = await sync_to_async(countryball.collection_card.open, thread_sensitive=True)("rb")
+            except (OSError, ValueError):
+                log.exception("Could not open the collection image for %s", countryball.country)
+                await interaction.followup.send(embed=embed)
+            else:
+                embed.set_thumbnail(url="attachment://countryball.png")
+                await interaction.followup.send(
+                    embed=embed,
+                    file=discord.File(image_file, filename="countryball.png"),
+                )
         else:
             await interaction.followup.send(embed=embed)

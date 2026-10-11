@@ -232,7 +232,7 @@ async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User
 
     def create_instances(batch: list[BallInstance]) -> list[BallInstance]:
         with transaction.atomic():
-            return BallInstance.objects.bulk_create(batch, batch_size=10)
+            return BallInstance.objects.bulk_create(batch, batch_size=100)
 
     progress_message = await ctx.send(
         f"Bulk grant in progress for {user.mention}\n"
@@ -240,8 +240,8 @@ async def balls_bulk_give(ctx: commands.Context[BallsDexBot], user: discord.User
         ephemeral=True,
     )
     created_instances: list[BallInstance] = []
-    for start in range(0, len(instances), 10):
-        batch = instances[start : start + 10]
+    for start in range(0, len(instances), 100):
+        batch = instances[start : start + 100]
         created_instances.extend(await sync_to_async(create_instances, thread_sensitive=True)(batch))
         percent = round(len(created_instances) / flags.n * 100)
         await progress_message.edit(
