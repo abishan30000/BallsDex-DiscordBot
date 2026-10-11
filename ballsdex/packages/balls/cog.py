@@ -1,5 +1,7 @@
 import enum
+import io
 import logging
+import os
 from datetime import timedelta
 from typing import TYPE_CHECKING, cast
 
@@ -1147,7 +1149,7 @@ class Balls(commands.GroupCog, group_name=settings.balls_slash_name):
         Parameters
         ----------
         countryball: Ball
-            The countryball you want to see the collection of, including disabled countryballs
+            The countryball you want to see the collection of
         filter: FilteringChoices
             Filter the collection by a specific filter.
         ephemeral: bool
@@ -1209,22 +1211,29 @@ class Balls(commands.GroupCog, group_name=settings.balls_slash_name):
         )
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.display_avatar.url)
         if countryball:
-            image_file = None
+            image_data = None
+            image_name = "countryball.png"
             for image_field in (countryball.wild_card, countryball.collection_card):
                 if not image_field:
                     continue
                 try:
-                    image_file = await sync_to_async(image_field.open, thread_sensitive=True)("rb")
+                    def read_image() -> bytes:
+                        with image_field.open("rb") as opened_image:
+                            return opened_image.read()
+
+                    image_data = await sync_to_async(read_image, thread_sensitive=True)()
                 except (OSError, ValueError):
                     log.warning("Could not open an image for %s", countryball.country, exc_info=True)
                 else:
+                    extension = os.path.splitext(image_field.name)[1] or ".png"
+                    image_name = f"countryball{extension}"
                     break
 
-            if image_file:
-                embed.set_thumbnail(url="attachment://countryball.png")
+            if image_data:
+                embed.set_thumbnail(url=f"attachment://{image_name}")
                 await interaction.followup.send(
                     embed=embed,
-                    file=discord.File(image_file, filename="countryball.png"),
+                    file=discord.File(io.BytesIO(image_data), filename=image_name),
                 )
             else:
                 await interaction.followup.send(embed=embed)
