@@ -28,7 +28,7 @@ async def haven_wipe(
     hard: bool = False,
     user: discord.User | None = None,
 ):
-    """Delete a percentage of collectibles caught in this server, optionally for one user."""
+    """Delete a percentage of collectibles in this server or globally for one user."""
     if not 1 <= percentage <= 100:
         await ctx.send("Percentage must be a whole number from 1 to 100.", ephemeral=True)
         return
@@ -37,7 +37,7 @@ async def haven_wipe(
         return
     await ctx.defer(ephemeral=True)
 
-    filters: dict[str, int] = {"server_id": ctx.guild.id}
+    filters: dict[str, int] = {}
     user_label = "all players"
     if user is not None:
         player = await Player.objects.aget_or_none(discord_id=user.id)
@@ -46,6 +46,10 @@ async def haven_wipe(
             return
         filters["player_id"] = player.pk
         user_label = f"{user} ({user.id})"
+        scope_label = "all havens"
+    else:
+        filters["server_id"] = ctx.guild.id
+        scope_label = f"{ctx.guild.name} ({ctx.guild.id})"
 
     queryset = BallInstance.objects.filter(**filters)
     instance_ids = [pk async for pk in queryset.values_list("pk", flat=True)]
@@ -60,7 +64,7 @@ async def haven_wipe(
     deletion_type = "permanently hard-delete" if hard else "soft-delete"
     details = (
         f"{target_count:,} of {len(instance_ids):,} active collectibles ({percentage}%)\n"
-        f"Haven: {ctx.guild.name} ({ctx.guild.id})\n"
+        f"Scope: {scope_label}\n"
         f"User: {user_label}\n"
         f"Mode: {deletion_type}"
         + ("\nThis permanently removes selected rows and any cascading related records." if hard else "")
@@ -83,7 +87,7 @@ async def haven_wipe(
 
     await ctx.send(
         f"{count:,} collectibles {'permanently hard-deleted' if hard else 'soft-deleted'} "
-        f"from {ctx.guild.name} for {user_label}.",
+        f"from {scope_label} for {user_label}.",
         ephemeral=True,
     )
     log.warning(
