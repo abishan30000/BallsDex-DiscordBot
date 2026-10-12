@@ -24,11 +24,14 @@ async def haven(ctx: commands.Context[BallsDexBot]):
 @checks.has_permissions("bd_models.delete_ballinstance", "bd_models.change_ballinstance")
 async def haven_wipe(
     ctx: commands.Context[BallsDexBot],
-    percentage: app_commands.Range[int, 1, 100],
+    percentage: int,
     hard: bool = False,
     user: discord.User | None = None,
 ):
     """Delete a percentage of collectibles caught in this server, optionally for one user."""
+    if not 1 <= percentage <= 100:
+        await ctx.send("Percentage must be a whole number from 1 to 100.", ephemeral=True)
+        return
     if ctx.guild is None:
         await ctx.send("Run this command inside the haven you want to wipe.", ephemeral=True)
         return
