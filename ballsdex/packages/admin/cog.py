@@ -53,7 +53,29 @@ class Admin(commands.Cog):
         self.admin.add_command(history_group)
         self.admin.add_command(logs_group)
         self.admin.add_command(money_group)
-        self.admin.add_command(haven_group)
+        existing_haven = self.admin.get_command(haven_group.name)
+        if existing_haven is None:
+            self.admin.add_command(haven_group)
+        elif isinstance(existing_haven, commands.HybridGroup):
+            # Another package or a prior cog load may have already registered
+            # /admin haven. Merge our subcommand into that group instead of
+            # failing the entire admin extension on a duplicate group name.
+            wipe_command = haven_group.get_command("wipe")
+            if wipe_command and existing_haven.get_command("wipe") is None:
+                existing_haven.add_command(wipe_command)
+        elif isinstance(existing_haven, commands.Group):
+            # Preserve any prefix-only haven subcommands while replacing the
+            # group with a hybrid group so Discord can register /wipe.
+            for subcommand in existing_haven.commands:
+                if haven_group.get_command(subcommand.name) is None:
+                    haven_group.add_command(subcommand)
+            self.admin.remove_command(existing_haven.name)
+            self.admin.add_command(haven_group)
+        else:
+            log.error(
+                "Cannot register /admin haven wipe because /admin haven is already a non-group command (%s)",
+                type(existing_haven).__name__,
+            )
 
     async def cog_check(self, ctx: commands.Context["BallsDexBot"]) -> bool:
         return await checks.is_staff().predicate(ctx)
